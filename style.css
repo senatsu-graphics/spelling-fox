@@ -208,4 +208,23 @@ button:active {
   .big-title {
     font-size: 28px;
   }
+  /* =========================
+   ショートカット説明
+========================= */
+.shortcut-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* =========================
+   コピーライト
+========================= */
+.copyright {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+}
 }
