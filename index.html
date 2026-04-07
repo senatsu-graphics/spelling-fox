@@ -2,23 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Spelling Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audio Spelling Quiz</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="quiz-container">
+    <h1>Audio Spelling Quiz</h1>
 
-  <h1>Spelling Quiz</h1>
+    <p id="hint"></p>
 
-  <p id="hint"></p>
+    <button id="playAudioBtn">🔊 Play</button>
 
-  <button id="playAudioBtn">🔊 Play</button>
+    <input
+      type="text"
+      id="answerInput"
+      placeholder="Type the word"
+      autocomplete="off"
+    />
 
-  <input type="text" id="answerInput" />
-  <button id="checkBtn">Check</button>
-  <button id="nextBtn">Next</button>
+    <div class="button-row">
+      <button id="checkBtn">Check</button>
+      <button id="nextBtn">Next</button>
+    </div>
 
-  <p id="result"></p>
+    <p id="result"></p>
+  </div>
 
   <script src="script.js"></script>
-
 </body>
 </html>
