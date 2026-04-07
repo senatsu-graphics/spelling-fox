@@ -1,3 +1,6 @@
+// =========================
+// Add words here (one per line)
+// =========================
 const wordString = `
 apple
 orange
@@ -9,13 +12,31 @@ watermelon
 pineapple
 `;
 
+// =========================
+// Create original data
+// =========================
+const originalQuizData = wordString
+  .split(/\n+/)
+  .map(word => word.trim())
+  .filter(word => word !== "")
+  .map(word => ({ word, hint: "" }));
+
+// =========================
+// State
+// =========================
+let quizData = [];
 let currentIndex = 0;
 let score = 0;
 let playCount = 0;
 const maxPlay = 2;
 let isAnswered = false;
 let autoNextTimer = null;
+let missedWords = [];
+let isReviewMode = false;
 
+// =========================
+// Elements
+// =========================
 const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -27,6 +48,13 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 const stateImage = document.getElementById("stateImage");
 
+const endButtons = document.getElementById("endButtons");
+const reviewBtn = document.getElementById("reviewBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+// =========================
+// Images and sounds
+// =========================
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -34,19 +62,30 @@ const imagePaths = {
   incorrect: "images/incorrect.png"
 };
 
-// 効果音
 const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
 correctSound.preload = "auto";
 incorrectSound.preload = "auto";
 
+// =========================
+// Helpers
+// =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
 }
 
 function updatePlayCountText() {
   playCountText.textContent = `Audio plays left: ${maxPlay - playCount}`;
+}
+
+function shuffleArray(array) {
+  const copied = [...array];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
 }
 
 function playWord(word) {
@@ -69,39 +108,97 @@ function playWord(word) {
 function playEffect(sound) {
   sound.pause();
   sound.currentTime = 0;
-
   sound.play().catch((error) => {
     console.log("Effect sound could not play:", error);
   });
 }
 
-function loadQuestion() {
-  const q = quizData[currentIndex];
+function canPlayAudio() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
 
+function canCheckAnswer() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
+
+// =========================
+// Mode start
+// =========================
+function startNormalMode() {
+  isReviewMode = false;
+  missedWords = [];
+  score = 0;
+  currentIndex = 0;
+  quizData = shuffleArray(originalQuizData);
+  showQuizUI();
+  loadQuestion();
+}
+
+function startReviewMode() {
+  if (missedWords.length === 0) return;
+
+  isReviewMode = true;
+  score = 0;
+  currentIndex = 0;
+  quizData = shuffleArray(missedWords);
+  missedWords = [];
+  showQuizUI();
+  loadQuestion();
+}
+
+// =========================
+// UI switching
+// =========================
+function showQuizUI() {
+  quizForm.style.display = "block";
+  playAudioBtn.style.display = "inline-block";
+  endButtons.style.display = "none";
+  answerInput.style.display = "block";
+  checkBtn.style.display = "inline-block";
+}
+
+function showEndUI() {
+  quizForm.style.display = "none";
+  playAudioBtn.style.display = "none";
+  endButtons.style.display = "block";
+  reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
+}
+
+// =========================
+// Load question
+// =========================
+function loadQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
     autoNextTimer = null;
   }
 
-  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
+  const q = quizData[currentIndex];
+
   answerInput.value = "";
   resultEl.textContent = "";
+  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
 
   answerInput.disabled = false;
   checkBtn.disabled = false;
 
-  playCount = 0;
   isAnswered = false;
+  playCount = 0;
 
-  updatePlayCountText();
   setStateImage("idle");
-  scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
+  updatePlayCountText();
+
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
 
   answerInput.focus();
 }
 
+// =========================
+// Check answer
+// =========================
 function checkAnswer() {
-  if (isAnswered) return;
+  if (!canCheckAnswer()) return;
 
   const userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = quizData[currentIndex].word.toLowerCase();
@@ -116,18 +213,25 @@ function checkAnswer() {
     setStateImage("correct");
     playEffect(correctSound);
   } else {
-    resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}. Next question in 3 seconds...`;
+    resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
+
+    // Save wrong word for review mode
+    missedWords.push(quizData[currentIndex]);
   }
 
-  scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
 
   autoNextTimer = setTimeout(() => {
     nextQuestion();
   }, 3000);
 }
 
+// =========================
+// Next question
+// =========================
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -139,20 +243,42 @@ function nextQuestion() {
   if (currentIndex < quizData.length) {
     loadQuestion();
   } else {
-    hintEl.textContent = "Finished!";
-    resultEl.textContent = `Final Score: ${score} / ${quizData.length}`;
-    scoreEl.textContent = "";
-    playCountText.textContent = "";
-
-    quizForm.style.display = "none";
-    playAudioBtn.style.display = "none";
-
-    setStateImage("idle");
+    finishQuiz();
   }
 }
 
+// =========================
+// Finish
+// =========================
+function finishQuiz() {
+  setStateImage("idle");
+  playCountText.textContent = "";
+
+  if (isReviewMode) {
+    if (missedWords.length > 0) {
+      resultEl.textContent = `Review finished. You still have ${missedWords.length} mistake(s).`;
+    } else {
+      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score}/${quizData.length}`;
+    }
+  } else {
+    resultEl.textContent = `Finished! Final Score: ${score}/${quizData.length}`;
+  }
+
+  hintEl.textContent = "";
+  showEndUI();
+}
+
+// =========================
+// Events
+// =========================
 playAudioBtn.addEventListener("click", () => {
+  if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
+});
+
+quizForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  checkAnswer();
 });
 
 answerInput.addEventListener("input", () => {
@@ -165,18 +291,32 @@ answerInput.addEventListener("input", () => {
   }
 });
 
-quizForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  checkAnswer();
-});
+document.addEventListener("keydown", (e) => {
+  if (endButtons.style.display === "block") return;
 
-document.addEventListener("keydown", (event) => {
-  if (event.code === "Space") {
-    if (isAnswered) return;
+  if (e.code === "Enter") {
+    if (!canCheckAnswer()) return;
+    e.preventDefault();
+    checkAnswer();
+    return;
+  }
 
-    event.preventDefault();
+  if (e.code === "Space") {
+    if (!canPlayAudio()) return;
+    e.preventDefault();
     playWord(quizData[currentIndex].word);
   }
 });
 
-loadQuestion();
+reviewBtn.addEventListener("click", () => {
+  startReviewMode();
+});
+
+restartBtn.addEventListener("click", () => {
+  startNormalMode();
+});
+
+// =========================
+// Start
+// =========================
+startNormalMode();
