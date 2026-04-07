@@ -1,6 +1,3 @@
-// =========================
-// Add words here (one per line)
-// =========================
 const wordString = `
 apple
 orange
@@ -12,18 +9,12 @@ watermelon
 pineapple
 `;
 
-// =========================
-// Create original data
-// =========================
 const originalQuizData = wordString
   .split(/\n+/)
   .map(word => word.trim())
   .filter(word => word !== "")
   .map(word => ({ word, hint: "" }));
 
-// =========================
-// State
-// =========================
 let quizData = [];
 let currentIndex = 0;
 let score = 0;
@@ -37,9 +28,6 @@ let isReviewMode = false;
 let missCount = 0;
 const maxMisses = 3;
 
-// =========================
-// Elements
-// =========================
 const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -61,32 +49,12 @@ const hearts = [
   document.getElementById("heart3")
 ];
 
-// =========================
-// Safety check
-// =========================
-const requiredElements = [
-  quizForm,
-  hintEl,
-  answerInput,
-  resultEl,
-  scoreEl,
-  playCountText,
-  playAudioBtn,
-  checkBtn,
-  stateImage,
-  endButtons,
-  reviewBtn,
-  restartBtn,
-  ...hearts
-];
+const feedbackBox = document.getElementById("feedbackBox");
+const correctAnswerText = document.getElementById("correctAnswerText");
+const compareBox = document.getElementById("compareBox");
+const userCompare = document.getElementById("userCompare");
+const correctCompare = document.getElementById("correctCompare");
 
-if (requiredElements.some(el => !el)) {
-  throw new Error("HTML element missing. Check id names in index.html.");
-}
-
-// =========================
-// Images and sounds
-// =========================
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -104,9 +72,6 @@ const incorrectSound = new Audio("audio/incorrect.mp3");
 correctSound.preload = "auto";
 incorrectSound.preload = "auto";
 
-// =========================
-// Helpers
-// =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
 }
@@ -168,9 +133,61 @@ function canCheckAnswer() {
   return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
 }
 
-// =========================
-// Mode start
-// =========================
+function hideFeedback() {
+  feedbackBox.style.display = "none";
+  compareBox.style.display = "none";
+  correctAnswerText.textContent = "";
+  userCompare.innerHTML = "";
+  correctCompare.innerHTML = "";
+}
+
+function escapeHtml(str) {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function buildComparisonHtml(user, correct) {
+  const maxLen = Math.max(user.length, correct.length);
+  let userHtml = "";
+  let correctHtml = "";
+
+  for (let i = 0; i < maxLen; i++) {
+    const u = user[i] ?? "";
+    const c = correct[i] ?? "";
+
+    if (u === c && u !== "") {
+      userHtml += `<span class="char-correct">${escapeHtml(u)}</span>`;
+      correctHtml += `<span class="char-correct">${escapeHtml(c)}</span>`;
+    } else {
+      if (u === "" && c !== "") {
+        correctHtml += `<span class="char-missing">${escapeHtml(c)}</span>`;
+        userHtml += `<span class="char-missing">_</span>`;
+      } else if (u !== "" && c === "") {
+        userHtml += `<span class="char-extra">${escapeHtml(u)}</span>`;
+      } else {
+        userHtml += `<span class="char-wrong">${escapeHtml(u)}</span>`;
+        correctHtml += `<span class="char-wrong">${escapeHtml(c)}</span>`;
+      }
+    }
+  }
+
+  return { userHtml, correctHtml };
+}
+
+function showIncorrectFeedback(user, correct) {
+  feedbackBox.style.display = "block";
+  compareBox.style.display = "block";
+  correctAnswerText.textContent = correct;
+
+  const { userHtml, correctHtml } = buildComparisonHtml(user, correct);
+  userCompare.innerHTML = userHtml;
+  correctCompare.innerHTML = correctHtml;
+}
+
 function startNormalMode() {
   isReviewMode = false;
   missedWords = [];
@@ -197,9 +214,6 @@ function startReviewMode() {
   loadQuestion();
 }
 
-// =========================
-// UI switching
-// =========================
 function showQuizUI() {
   quizForm.style.display = "block";
   playAudioBtn.style.display = "inline-block";
@@ -215,9 +229,6 @@ function showEndUI() {
   reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
 }
 
-// =========================
-// Load question
-// =========================
 function loadQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -239,6 +250,7 @@ function loadQuestion() {
   setStateImage("idle");
   updatePlayCountText();
   updateHearts();
+  hideFeedback();
 
   const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
   scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
@@ -246,9 +258,6 @@ function loadQuestion() {
   answerInput.focus();
 }
 
-// =========================
-// Check answer
-// =========================
 function checkAnswer() {
   if (!canCheckAnswer()) return;
 
@@ -264,13 +273,16 @@ function checkAnswer() {
     score++;
     setStateImage("correct");
     playEffect(correctSound);
+    hideFeedback();
   } else {
     missCount++;
-    resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
+    resultEl.textContent = "Incorrect!";
     setStateImage("incorrect");
     playEffect(incorrectSound);
     missedWords.push(quizData[currentIndex]);
     updateHearts();
+
+    showIncorrectFeedback(userAnswer, correctAnswer);
   }
 
   const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
@@ -288,9 +300,6 @@ function checkAnswer() {
   }, 3000);
 }
 
-// =========================
-// Next question
-// =========================
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -306,9 +315,6 @@ function nextQuestion() {
   }
 }
 
-// =========================
-// Finish / Game Over
-// =========================
 function gameOver() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -336,9 +342,6 @@ function finishQuiz() {
   showEndUI();
 }
 
-// =========================
-// Events
-// =========================
 playAudioBtn.addEventListener("click", () => {
   if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
@@ -387,7 +390,4 @@ restartBtn.addEventListener("click", () => {
   startNormalMode();
 });
 
-// =========================
-// Start
-// =========================
 startNormalMode();
