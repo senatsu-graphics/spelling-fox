@@ -135,7 +135,6 @@ const playCountText = document.getElementById("playCountText");
 
 const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
-const nextBtn = document.getElementById("nextBtn");
 const stateImage = document.getElementById("stateImage");
 
 const endButtons = document.getElementById("endButtons");
@@ -230,10 +229,6 @@ function canPlayAudio() {
 
 function canCheckAnswer() {
   return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
-}
-
-function canSkipToNext() {
-  return quizData.length > 0 && currentIndex < quizData.length;
 }
 
 function hideFeedback() {
@@ -451,11 +446,6 @@ playAudioBtn.addEventListener("click", () => {
 checkBtn.addEventListener("click", (e) => {
   e.preventDefault();
   checkAnswer();
-});
-
-nextBtn.addEventListener("click", () => {
-  if (!canSkipToNext()) return;
-  nextQuestion();
 });
 
 quizForm.addEventListener("submit", (e) => {
