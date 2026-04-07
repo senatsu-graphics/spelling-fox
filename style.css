@@ -16,6 +16,17 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.hearts {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hearts img {
+  width: 32px;
+}
+
 h1 {
   margin-top: 0;
   font-size: 28px;
