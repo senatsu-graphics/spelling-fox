@@ -347,7 +347,6 @@ function loadQuestion() {
   hideFeedback();
 
   const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
-  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
 
   answerInput.focus();
 }
