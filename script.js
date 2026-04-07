@@ -68,7 +68,8 @@ const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
   correct: "images/correct.png",
-  incorrect: "images/incorrect.png"
+  incorrect: "images/incorrect.png",
+  gameover: "images/gameover.png"
 };
 
 const HEART_BLACK = "images/Heart-black.png";
