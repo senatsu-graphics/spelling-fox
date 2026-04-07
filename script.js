@@ -289,7 +289,7 @@ function gameOver() {
     autoNextTimer = null;
   }
 
-  setStateImage("incorrect");
+  setStateImage("gameover");
   hintEl.textContent = "Game Over";
   resultEl.textContent = `Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
   playCountText.textContent = "";
