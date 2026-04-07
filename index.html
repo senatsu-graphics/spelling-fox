@@ -14,18 +14,20 @@
 
     <p id="hint"></p>
 
-    <button id="playAudioBtn">🔊 Play</button>
+    <button id="playAudioBtn" type="button">🔊 Play</button>
 
-    <input
-      type="text"
-      id="answerInput"
-      placeholder="Type the word"
-      autocomplete="off"
-    />
+    <form id="quizForm">
+      <input
+        type="text"
+        id="answerInput"
+        placeholder="Type the word"
+        autocomplete="off"
+      />
 
-    <div class="button-row">
-      <button id="checkBtn">Check</button>
-    </div>
+      <div class="button-row">
+        <button id="checkBtn" type="submit">Check</button>
+      </div>
+    </form>
 
     <p id="result"></p>
     <p id="score"></p>
