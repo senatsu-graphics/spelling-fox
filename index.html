@@ -20,19 +20,35 @@
 
     <p id="hint"></p>
 
-   <form id="quizForm">
-  <input
-    id="answerInput"
-    type="text"
-    placeholder="Type the word"
-    autocomplete="off"
-  >
+    <form id="quizForm">
+      <div id="feedbackBox" class="feedback-box" style="display: none;">
+        <p class="feedback-label">Correct answer</p>
+        <p id="correctAnswerText" class="correct-answer-text"></p>
 
-  <div class="button-row">
-    <button id="playAudioBtn" type="button">🔊 Play</button>
-    <button id="checkBtn" type="submit">Check</button>
-  </div>
-</form>
+        <div id="compareBox" class="compare-box" style="display: none;">
+          <div class="compare-row">
+            <span class="compare-title">Yours:</span>
+            <span id="userCompare" class="compare-text"></span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-title">Correct:</span>
+            <span id="correctCompare" class="compare-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <input
+        id="answerInput"
+        type="text"
+        placeholder="Type the word"
+        autocomplete="off"
+      >
+
+      <div class="button-row">
+        <button id="playAudioBtn" type="button">🔊 Play</button>
+        <button id="checkBtn" type="submit">Check</button>
+      </div>
+    </form>
 
     <p id="result"></p>
     <p id="score"></p>
