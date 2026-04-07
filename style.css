@@ -26,7 +26,6 @@ h1 {
   display: block;
   width: 80%;
   max-width: 220px;
-  height: auto;
   margin: 20px auto;
   transition: all 0.3s ease;
 }
@@ -35,17 +34,14 @@ input {
   width: 100%;
   padding: 10px;
   margin: 12px 0;
-  box-sizing: border-box;
   font-size: 16px;
+  box-sizing: border-box;
 }
 
 button {
   padding: 10px 14px;
-  margin: 4px 4px 4px 0;
   cursor: pointer;
-}
-
-.button-row {
+  margin-right: 8px;
   margin-top: 8px;
 }
 
@@ -58,4 +54,8 @@ button {
 #playCountText,
 #hint {
   margin-top: 8px;
+}
+
+#endButtons {
+  margin-top: 16px;
 }
