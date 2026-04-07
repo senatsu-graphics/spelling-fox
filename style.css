@@ -11,7 +11,7 @@ body {
   padding: 24px;
   border-radius: 16px;
   width: 360px;
-  max-width: 90%;   /* ← スマホ対応 */
+  max-width: 20%;   /* ← スマホ対応 */
   margin: 0 auto;   /* ← 中央 */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
