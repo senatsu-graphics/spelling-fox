@@ -1,3 +1,6 @@
+/* =========================
+   全体レイアウト
+========================= */
 body {
   font-family: Arial, sans-serif;
   background: #f4f6fb;
@@ -8,6 +11,9 @@ body {
   margin: 0;
 }
 
+/* =========================
+   コンテナ
+========================= */
 .quiz-container {
   background: white;
   padding: 24px;
@@ -19,11 +25,17 @@ body {
   text-align: center;
 }
 
+/* =========================
+   タイトル
+========================= */
 h1 {
   margin-top: 0;
   font-size: 28px;
 }
 
+/* =========================
+   ハート
+========================= */
 .hearts {
   display: flex;
   justify-content: center;
@@ -36,6 +48,9 @@ h1 {
   height: auto;
 }
 
+/* =========================
+   キャラクター画像
+========================= */
 #stateImage {
   display: block;
   width: 80%;
@@ -44,10 +59,16 @@ h1 {
   transition: all 0.3s ease;
 }
 
+/* =========================
+   フォーム
+========================= */
 #quizForm {
   width: 100%;
 }
 
+/* =========================
+   入力欄
+========================= */
 input {
   width: 100%;
   padding: 12px;
@@ -58,6 +79,9 @@ input {
   border: 1px solid #ccc;
 }
 
+/* =========================
+   ボタン共通
+========================= */
 button {
   padding: 10px 14px;
   margin: 4px;
@@ -78,6 +102,9 @@ button:active {
   background-color: #ddd;
 }
 
+/* =========================
+   ボタン行
+========================= */
 .button-row {
   display: flex;
   justify-content: space-between;
@@ -90,6 +117,9 @@ button:active {
   min-width: 0;
 }
 
+/* =========================
+   結果・スコア
+========================= */
 #result {
   margin-top: 16px;
   font-weight: bold;
@@ -101,10 +131,16 @@ button:active {
   margin-top: 8px;
 }
 
+/* =========================
+   終了ボタン
+========================= */
 #endButtons {
   margin-top: 16px;
 }
 
+/* =========================
+   大きいタイトル
+========================= */
 .big-title {
   font-size: 36px;
   font-weight: bold;
@@ -114,6 +150,9 @@ button:active {
   margin-bottom: 10px;
 }
 
+/* =========================
+   大きいスコア
+========================= */
 .big-score {
   font-size: 52px;
   font-weight: bold;
@@ -122,6 +161,9 @@ button:active {
   text-align: center;
 }
 
+/* =========================
+   不正解フィードバック
+========================= */
 .feedback-box {
   text-align: left;
   background: #fafafa;
@@ -195,6 +237,29 @@ button:active {
   padding: 0 1px;
 }
 
+/* =========================
+   ショートカット説明
+========================= */
+.shortcut-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* =========================
+   コピーライト
+========================= */
+.copyright {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+}
+
+/* =========================
+   スマホ対応
+========================= */
 @media (max-width: 480px) {
   .quiz-container {
     width: 95%;
@@ -208,23 +273,13 @@ button:active {
   .big-title {
     font-size: 28px;
   }
-  /* =========================
-   ショートカット説明
-========================= */
-.shortcut-hint {
-  margin-top: 16px;
-  font-size: 6px;
-  color: #888;
-  text-align: center;
-}
 
-/* =========================
-   コピーライト
-========================= */
-.copyright {
-  margin-top: 8px;
-  font-size: 6px;
-  color: #bbb;
-  text-align: center;
-}
+  .button-row button {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .hearts img {
+    width: 28px;
+  }
 }
