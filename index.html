@@ -10,17 +10,22 @@
   <div class="quiz-container">
     <h1>Audio Spelling Quiz</h1>
 
+    <!-- ❤️ ハート -->
     <div id="hearts" class="hearts">
       <img id="heart1" src="images/Heart-black.png" alt="heart">
       <img id="heart2" src="images/Heart-black.png" alt="heart">
       <img id="heart3" src="images/Heart-black.png" alt="heart">
     </div>
 
+    <!-- キャラクター画像 -->
     <img id="stateImage" src="images/idle.png" alt="Quiz character">
 
+    <!-- ヒント -->
     <p id="hint"></p>
 
+    <!-- 入力フォーム -->
     <form id="quizForm">
+      <!-- 不正解フィードバック -->
       <div id="feedbackBox" class="feedback-box" style="display: none;">
         <p class="feedback-label">Correct answer</p>
         <p id="correctAnswerText" class="correct-answer-text"></p>
@@ -35,17 +40,9 @@
             <span id="correctCompare" class="compare-text"></span>
           </div>
         </div>
-        <!-- ショートカット説明 -->
-<p class="shortcut-hint">
-  ⌨️ Enter: Check　/　Space: Play
-</p>
-
-<!-- コピーライト -->
-<p class="copyright">
-  © Senatsu-Graphics
-</p>
       </div>
 
+      <!-- 入力欄 -->
       <input
         id="answerInput"
         type="text"
@@ -53,6 +50,7 @@
         autocomplete="off"
       >
 
+      <!-- ボタン -->
       <div class="button-row">
         <button id="playAudioBtn" type="button">🔊 Play</button>
         <button id="checkBtn" type="submit">Check</button>
@@ -60,17 +58,29 @@
       </div>
     </form>
 
+    <!-- 結果 -->
     <p id="result"></p>
     <p id="score"></p>
     <p id="playCountText"></p>
 
+    <!-- 終了時 -->
     <div id="endButtons" style="display: none;">
       <button id="reviewBtn" type="button">Review Mistakes</button>
       <button id="restartBtn" type="button">Restart All</button>
     </div>
+
+    <!-- 🎯 ショートカット -->
+    <p class="shortcut-hint">
+      ⌨️ Enter: Check　/　Space: Play　/　Next: Skip
+    </p>
+
+    <!-- 🎯 コピーライト -->
+    <p class="copyright">
+      © Senatsu-Graphics
+    </p>
+
   </div>
 
   <script src="script.js"></script>
-
 </body>
 </html>
