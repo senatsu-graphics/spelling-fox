@@ -1,9 +1,6 @@
-const quizData = [
-  { word: "apple", hint: "" },
-  { word: "orange", hint: "" },
-  { word: "banana", hint: "" }
-];
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHeZLFurXjdkezFR3sej3EgIX3qOLz7ZL8Lr8SWyJjJXk-EBkULSpmilORsVDNPKYgiSasvsu4yG2/pubhtml?gid=0&single=true";
 
+let quizData = [];
 let currentIndex = 0;
 let score = 0;
 let playCount = 0;
@@ -29,10 +26,8 @@ const imagePaths = {
   incorrect: "images/incorrect.png"
 };
 
-// 効果音
 const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
-
 correctSound.preload = "auto";
 incorrectSound.preload = "auto";
 
@@ -64,10 +59,59 @@ function playWord(word) {
 function playEffect(sound) {
   sound.pause();
   sound.currentTime = 0;
-
   sound.play().catch((error) => {
     console.log("Effect sound could not play:", error);
   });
+}
+
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if (lines.length <= 1) return [];
+
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+  const wordIndex = headers.indexOf("word");
+  const hintIndex = headers.indexOf("hint");
+
+  return lines.slice(1)
+    .map(line => {
+      const cols = line.split(",").map(col => col.trim());
+      return {
+        word: cols[wordIndex] || "",
+        hint: hintIndex >= 0 ? (cols[hintIndex] || "") : ""
+      };
+    })
+    .filter(item => item.word !== "");
+}
+
+async function loadQuizData() {
+  try {
+    const response = await fetch(CSV_URL);
+    const csvText = await response.text();
+    const data = parseCSV(csvText);
+
+    if (data.length === 0) {
+      throw new Error("No quiz data found.");
+    }
+
+    quizData = shuffleArray(data);
+    currentIndex = 0;
+    score = 0;
+
+    loadQuestion();
+  } catch (error) {
+    hintEl.textContent = "Failed to load quiz data.";
+    resultEl.textContent = "Check your Google Sheet URL or publishing settings.";
+    console.error(error);
+  }
 }
 
 function loadQuestion() {
@@ -147,7 +191,9 @@ function nextQuestion() {
 }
 
 playAudioBtn.addEventListener("click", () => {
-  playWord(quizData[currentIndex].word);
+  if (quizData.length > 0) {
+    playWord(quizData[currentIndex].word);
+  }
 });
 
 answerInput.addEventListener("input", () => {
@@ -167,11 +213,11 @@ quizForm.addEventListener("submit", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.code === "Space") {
-    if (isAnswered) return;
+    if (isAnswered || quizData.length === 0) return;
 
     event.preventDefault();
     playWord(quizData[currentIndex].word);
   }
 });
 
-loadQuestion();
+loadQuizData();
