@@ -22,15 +22,19 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 const stateImage = document.getElementById("stateImage");
 
-const correctSound = new Audio("audio/correct.mp3");
-const incorrectSound = new Audio("audio/incorrect.mp3");
-
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
   correct: "images/correct.png",
   incorrect: "images/incorrect.png"
 };
+
+// 効果音
+const correctSound = new Audio("audio/correct.mp3");
+const incorrectSound = new Audio("audio/incorrect.mp3");
+
+correctSound.preload = "auto";
+incorrectSound.preload = "auto";
 
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
@@ -55,6 +59,15 @@ function playWord(word) {
 
   playCount++;
   updatePlayCountText();
+}
+
+function playEffect(sound) {
+  sound.pause();
+  sound.currentTime = 0;
+
+  sound.play().catch((error) => {
+    console.log("Effect sound could not play:", error);
+  });
 }
 
 function loadQuestion() {
@@ -96,18 +109,11 @@ function checkAnswer() {
     resultEl.textContent = "Correct! Next question in 3 seconds...";
     score++;
     setStateImage("correct");
-
-    // 🔊 正解音
-    correctSound.currentTime = 0;
-    correctSound.play();
-
+    playEffect(correctSound);
   } else {
     resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}. Next question in 3 seconds...`;
     setStateImage("incorrect");
-
-    // 🔊 不正解音
-    incorrectSound.currentTime = 0;
-    incorrectSound.play();
+    playEffect(incorrectSound);
   }
 
   scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
@@ -116,6 +122,7 @@ function checkAnswer() {
     nextQuestion();
   }, 3000);
 }
+
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
