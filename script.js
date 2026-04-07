@@ -9,6 +9,7 @@ let score = 0;
 let playCount = 0;
 const maxPlay = 2;
 let isAnswered = false;
+let autoNextTimer = null;
 
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -56,9 +57,17 @@ function playWord(word) {
 function loadQuestion() {
   const q = quizData[currentIndex];
 
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
   hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
   answerInput.value = "";
   resultEl.textContent = "";
+
+  answerInput.disabled = false;
+  checkBtn.disabled = false;
 
   playCount = 0;
   isAnswered = false;
@@ -75,20 +84,31 @@ function checkAnswer() {
   const correctAnswer = quizData[currentIndex].word.toLowerCase();
 
   isAnswered = true;
+  answerInput.disabled = true;
+  checkBtn.disabled = true;
 
   if (userAnswer === correctAnswer) {
-    resultEl.textContent = "Correct!";
+    resultEl.textContent = "Correct! Next question in 3 seconds...";
     score++;
     setStateImage("correct");
   } else {
-    resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}`;
+    resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}. Next question in 3 seconds...`;
     setStateImage("incorrect");
   }
 
   scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
+
+  autoNextTimer = setTimeout(() => {
+    nextQuestion();
+  }, 3000);
 }
 
 function nextQuestion() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
   currentIndex++;
 
   if (currentIndex < quizData.length) {
@@ -123,6 +143,5 @@ answerInput.addEventListener("input", () => {
 });
 
 checkBtn.addEventListener("click", checkAnswer);
-nextBtn.addEventListener("click", nextQuestion);
 
 loadQuestion();
