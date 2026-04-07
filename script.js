@@ -149,7 +149,6 @@ quizForm.addEventListener("submit", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.code === "Space") {
-    if (document.activeElement === answerInput) return;
     if (isAnswered) return;
 
     event.preventDefault();
