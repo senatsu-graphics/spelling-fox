@@ -1,11 +1,12 @@
 // =======================
 // データ
 // =======================
-const quizData = [
-  { word: "apple", hint: "fruit" },
-  { word: "beautiful", hint: "very pretty" },
-  { word: "because", hint: "used to give a reason" }
-];
+const words = ["apple", "orange", "banana"];
+
+const quizData = words.map(word => ({
+  word: word,
+  hint: ""
+}));
 
 // =======================
 // 状態管理
