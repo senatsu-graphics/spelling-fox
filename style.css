@@ -213,7 +213,7 @@ button:active {
 ========================= */
 .shortcut-hint {
   margin-top: 16px;
-  font-size: 12px;
+  font-size: 6px;
   color: #888;
   text-align: center;
 }
@@ -223,7 +223,7 @@ button:active {
 ========================= */
 .copyright {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 6px;
   color: #bbb;
   text-align: center;
 }
