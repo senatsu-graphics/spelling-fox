@@ -1,6 +1,3 @@
-// =========================
-// Add words here (one per line)
-// =========================
 const wordString = `
 apple
 orange
@@ -12,18 +9,12 @@ watermelon
 pineapple
 `;
 
-// =========================
-// Create original data
-// =========================
 const originalQuizData = wordString
   .split(/\n+/)
   .map(word => word.trim())
   .filter(word => word !== "")
   .map(word => ({ word, hint: "" }));
 
-// =========================
-// State
-// =========================
 let quizData = [];
 let currentIndex = 0;
 let score = 0;
@@ -34,9 +25,6 @@ let autoNextTimer = null;
 let missedWords = [];
 let isReviewMode = false;
 
-// =========================
-// Elements
-// =========================
 const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -52,9 +40,6 @@ const endButtons = document.getElementById("endButtons");
 const reviewBtn = document.getElementById("reviewBtn");
 const restartBtn = document.getElementById("restartBtn");
 
-// =========================
-// Images and sounds
-// =========================
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -68,9 +53,6 @@ const incorrectSound = new Audio("audio/incorrect.mp3");
 correctSound.preload = "auto";
 incorrectSound.preload = "auto";
 
-// =========================
-// Helpers
-// =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
 }
@@ -121,9 +103,6 @@ function canCheckAnswer() {
   return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
 }
 
-// =========================
-// Mode start
-// =========================
 function startNormalMode() {
   isReviewMode = false;
   missedWords = [];
@@ -146,9 +125,6 @@ function startReviewMode() {
   loadQuestion();
 }
 
-// =========================
-// UI switching
-// =========================
 function showQuizUI() {
   quizForm.style.display = "block";
   playAudioBtn.style.display = "inline-block";
@@ -164,9 +140,6 @@ function showEndUI() {
   reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
 }
 
-// =========================
-// Load question
-// =========================
 function loadQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -194,9 +167,6 @@ function loadQuestion() {
   answerInput.focus();
 }
 
-// =========================
-// Check answer
-// =========================
 function checkAnswer() {
   if (!canCheckAnswer()) return;
 
@@ -216,8 +186,6 @@ function checkAnswer() {
     resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
-
-    // Save wrong word for review mode
     missedWords.push(quizData[currentIndex]);
   }
 
@@ -229,9 +197,6 @@ function checkAnswer() {
   }, 3000);
 }
 
-// =========================
-// Next question
-// =========================
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -247,9 +212,6 @@ function nextQuestion() {
   }
 }
 
-// =========================
-// Finish
-// =========================
 function finishQuiz() {
   setStateImage("idle");
   playCountText.textContent = "";
@@ -268,9 +230,6 @@ function finishQuiz() {
   showEndUI();
 }
 
-// =========================
-// Events
-// =========================
 playAudioBtn.addEventListener("click", () => {
   if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
@@ -316,7 +275,4 @@ restartBtn.addEventListener("click", () => {
   startNormalMode();
 });
 
-// =========================
-// Start
-// =========================
 startNormalMode();
