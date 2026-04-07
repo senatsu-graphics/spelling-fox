@@ -1,42 +1,16 @@
-// =========================
-// 単語を改行で追加
-// =========================
-const wordString = `
-apple
-orange
-banana
-grape
-peach
-strawberry
-watermelon
-pineapple
-`;
+const quizData = [
+  { word: "apple", hint: "" },
+  { word: "orange", hint: "" },
+  { word: "banana", hint: "" }
+];
 
-// =========================
-// 元データ
-// =========================
-const originalQuizData = wordString
-  .split(/\n+/)
-  .map(word => word.trim())
-  .filter(word => word !== "")
-  .map(word => ({ word, hint: "" }));
-
-// =========================
-// 状態
-// =========================
-let quizData = [];
 let currentIndex = 0;
 let score = 0;
 let playCount = 0;
 const maxPlay = 2;
 let isAnswered = false;
 let autoNextTimer = null;
-let missedWords = [];
-let isReviewMode = false;
 
-// =========================
-// 要素取得
-// =========================
 const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -48,13 +22,6 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 const stateImage = document.getElementById("stateImage");
 
-const endButtons = document.getElementById("endButtons");
-const reviewBtn = document.getElementById("reviewBtn");
-const restartBtn = document.getElementById("restartBtn");
-
-// =========================
-// 画像・音
-// =========================
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -62,30 +29,19 @@ const imagePaths = {
   incorrect: "images/incorrect.png"
 };
 
+// 効果音
 const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
 correctSound.preload = "auto";
 incorrectSound.preload = "auto";
 
-// =========================
-// 共通関数
-// =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
 }
 
 function updatePlayCountText() {
   playCountText.textContent = `Audio plays left: ${maxPlay - playCount}`;
-}
-
-function shuffleArray(array) {
-  const copied = [...array];
-  for (let i = copied.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copied[i], copied[j]] = [copied[j], copied[i]];
-  }
-  return copied;
 }
 
 function playWord(word) {
@@ -108,102 +64,39 @@ function playWord(word) {
 function playEffect(sound) {
   sound.pause();
   sound.currentTime = 0;
+
   sound.play().catch((error) => {
     console.log("Effect sound could not play:", error);
   });
 }
 
-function canPlayAudio() {
-  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
-}
-
-function canCheckAnswer() {
-  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
-}
-
-// =========================
-// モード開始
-// =========================
-function startNormalMode() {
-  isReviewMode = false;
-  missedWords = [];
-  score = 0;
-  currentIndex = 0;
-  quizData = shuffleArray(originalQuizData);
-  showQuizUI();
-  loadQuestion();
-}
-
-function startReviewMode() {
-  if (missedWords.length === 0) return;
-
-  isReviewMode = true;
-  score = 0;
-  currentIndex = 0;
-  quizData = shuffleArray(missedWords);
-  missedWords = [];
-  showQuizUI();
-  loadQuestion();
-}
-
-// =========================
-// UI切り替え
-// =========================
-function showQuizUI() {
-  quizForm.style.display = "block";
-  playAudioBtn.style.display = "inline-block";
-  endButtons.style.display = "none";
-  answerInput.style.display = "block";
-  checkBtn.style.display = "inline-block";
-}
-
-function showEndUI() {
-  quizForm.style.display = "none";
-  playAudioBtn.style.display = "none";
-  endButtons.style.display = "block";
-
-  if (missedWords.length > 0) {
-    reviewBtn.style.display = "inline-block";
-  } else {
-    reviewBtn.style.display = "none";
-  }
-}
-
-// =========================
-// 問題読み込み
-// =========================
 function loadQuestion() {
+  const q = quizData[currentIndex];
+
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
     autoNextTimer = null;
   }
 
-  const q = quizData[currentIndex];
-
+  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
   answerInput.value = "";
   resultEl.textContent = "";
-  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
 
   answerInput.disabled = false;
   checkBtn.disabled = false;
 
-  isAnswered = false;
   playCount = 0;
+  isAnswered = false;
 
-  setStateImage("idle");
   updatePlayCountText();
-
-  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
-  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
+  setStateImage("idle");
+  scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
 
   answerInput.focus();
 }
 
-// =========================
-// 判定
-// =========================
 function checkAnswer() {
-  if (!canCheckAnswer()) return;
+  if (isAnswered) return;
 
   const userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = quizData[currentIndex].word.toLowerCase();
@@ -218,23 +111,18 @@ function checkAnswer() {
     setStateImage("correct");
     playEffect(correctSound);
   } else {
-    resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
+    resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}. Next question in 3 seconds...`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
-    missedWords.push(quizData[currentIndex]);
   }
 
-  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
-  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
+  scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
 
   autoNextTimer = setTimeout(() => {
     nextQuestion();
   }, 3000);
 }
 
-// =========================
-// 次の問題
-// =========================
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
@@ -246,46 +134,22 @@ function nextQuestion() {
   if (currentIndex < quizData.length) {
     loadQuestion();
   } else {
-    finishQuiz();
+    hintEl.textContent = "Finished!";
+    resultEl.textContent = `Final Score: ${score} / ${quizData.length}`;
+    scoreEl.textContent = "";
+    playCountText.textContent = "";
+
+    quizForm.style.display = "none";
+    playAudioBtn.style.display = "none";
+
+    setStateImage("idle");
   }
 }
 
-// =========================
-// 終了
-// =========================
-function finishQuiz() {
-  setStateImage("idle");
-  playCountText.textContent = "";
-
-  if (isReviewMode) {
-    if (missedWords.length > 0) {
-      resultEl.textContent = `Review finished. You still have ${missedWords.length} mistake(s).`;
-    } else {
-      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score}/${quizData.length}`;
-    }
-  } else {
-    resultEl.textContent = `Finished! Final Score: ${score}/${quizData.length}`;
-  }
-
-  hintEl.textContent = "";
-  showEndUI();
-}
-
-// =========================
-// イベント
-// =========================
 playAudioBtn.addEventListener("click", () => {
-  if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
 });
 
-// ボタンでCheck
-quizForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  checkAnswer();
-});
-
-// 入力中画像
 answerInput.addEventListener("input", () => {
   if (isAnswered) return;
 
@@ -296,34 +160,18 @@ answerInput.addEventListener("input", () => {
   }
 });
 
-// EnterでCheck、SpaceでPlay
-document.addEventListener("keydown", (e) => {
-  // 終了画面中は無視
-  if (endButtons.style.display === "block") return;
+quizForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  checkAnswer();
+});
 
-  if (e.code === "Enter") {
-    if (!canCheckAnswer()) return;
-    e.preventDefault();
-    checkAnswer();
-    return;
-  }
+document.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+    if (isAnswered) return;
 
-  if (e.code === "Space") {
-    if (!canPlayAudio()) return;
-    e.preventDefault();
+    event.preventDefault();
     playWord(quizData[currentIndex].word);
   }
 });
 
-reviewBtn.addEventListener("click", () => {
-  startReviewMode();
-});
-
-restartBtn.addEventListener("click", () => {
-  startNormalMode();
-});
-
-// =========================
-// 開始
-// =========================
-startNormalMode();
+loadQuestion();
