@@ -1,5 +1,5 @@
 // =========================
-// 単語
+// Add words here (one per line)
 // =========================
 const wordString = `
 apple
@@ -8,41 +8,53 @@ banana
 grape
 peach
 strawberry
+watermelon
+pineapple
 `;
 
+// =========================
+// Create original data
+// =========================
 const originalQuizData = wordString
   .split(/\n+/)
-  .map(w => w.trim())
-  .filter(w => w !== "")
-  .map(w => ({ word: w }));
+  .map(word => word.trim())
+  .filter(word => word !== "")
+  .map(word => ({ word, hint: "" }));
 
 // =========================
-// 状態
+// State
 // =========================
 let quizData = [];
 let currentIndex = 0;
 let score = 0;
+let playCount = 0;
+const maxPlay = 2;
+let isAnswered = false;
+let autoNextTimer = null;
+let missedWords = [];
+let isReviewMode = false;
 
 let missCount = 0;
 const maxMisses = 3;
 
-let isAnswered = false;
-
 // =========================
-// 要素
+// Elements
 // =========================
+const quizForm = document.getElementById("quizForm");
+const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
 const resultEl = document.getElementById("result");
 const scoreEl = document.getElementById("score");
+const playCountText = document.getElementById("playCountText");
 
-const playBtn = document.getElementById("playAudioBtn");
-const form = document.getElementById("quizForm");
+const playAudioBtn = document.getElementById("playAudioBtn");
+const checkBtn = document.getElementById("checkBtn");
+const stateImage = document.getElementById("stateImage");
 
+const endButtons = document.getElementById("endButtons");
 const reviewBtn = document.getElementById("reviewBtn");
 const restartBtn = document.getElementById("restartBtn");
-const endButtons = document.getElementById("endButtons");
 
-// ❤️ ハート
 const hearts = [
   document.getElementById("heart1"),
   document.getElementById("heart2"),
@@ -50,143 +62,306 @@ const hearts = [
 ];
 
 // =========================
-// ハート更新
+// Images and sounds
 // =========================
+const imagePaths = {
+  idle: "images/idle.png",
+  typing: "images/type.png",
+  correct: "images/correct.png",
+  incorrect: "images/incorrect.png"
+};
+
+const HEART_BLACK = "images/Heart-black.png";
+const HEART_WHITE = "images/Heart-white.png";
+
+const correctSound = new Audio("audio/correct.mp3");
+const incorrectSound = new Audio("audio/incorrect.mp3");
+
+correctSound.preload = "auto";
+incorrectSound.preload = "auto";
+
+// =========================
+// Helpers
+// =========================
+function setStateImage(state) {
+  stateImage.src = imagePaths[state];
+}
+
+function updatePlayCountText() {
+  playCountText.textContent = `Audio plays left: ${maxPlay - playCount}`;
+}
+
 function updateHearts() {
-  for (let i = 0; i < maxMisses; i++) {
-    if (i < maxMisses - missCount) {
-      hearts[i].src = "images/Heart-black.png";
-    } else {
-      hearts[i].src = "images/Heart-white.png";
-    }
+  const livesLeft = maxMisses - missCount;
+
+  hearts.forEach((heart, index) => {
+    heart.src = index < livesLeft ? HEART_BLACK : HEART_WHITE;
+  });
+}
+
+function shuffleArray(array) {
+  const copied = [...array];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
   }
+  return copied;
 }
 
-// =========================
-// シャッフル
-// =========================
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
-// =========================
-// 音声
-// =========================
 function playWord(word) {
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = "en-US";
-  speechSynthesis.speak(u);
-}
-
-// =========================
-// 問題
-// =========================
-function loadQuestion() {
-  answerInput.value = "";
-  resultEl.textContent = "";
-  isAnswered = false;
-
-  scoreEl.textContent = `Score: ${score}/${quizData.length}`;
-  answerInput.focus();
-}
-
-// =========================
-// 判定
-// =========================
-function checkAnswer() {
-  if (isAnswered) return;
-
-  const user = answerInput.value.trim().toLowerCase();
-  const correct = quizData[currentIndex].word;
-
-  isAnswered = true;
-
-  if (user === correct) {
-    resultEl.textContent = "Correct!";
-    score++;
-  } else {
-    resultEl.textContent = `Incorrect: ${correct}`;
-    missCount++;
-    updateHearts();
-
-    if (missCount >= maxMisses) {
-      gameOver();
-      return;
-    }
-  }
-
-  setTimeout(nextQuestion, 1500);
-}
-
-// =========================
-// 次
-// =========================
-function nextQuestion() {
-  currentIndex++;
-
-  if (currentIndex >= quizData.length) {
-    finish();
+  if (playCount >= maxPlay) {
+    alert("You can only play the audio 2 times!");
     return;
   }
 
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-US";
+  utterance.rate = 0.9;
+  speechSynthesis.speak(utterance);
+
+  playCount++;
+  updatePlayCountText();
+}
+
+function playEffect(sound) {
+  sound.pause();
+  sound.currentTime = 0;
+  sound.play().catch((error) => {
+    console.log("Effect sound could not play:", error);
+  });
+}
+
+function canPlayAudio() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
+
+function canCheckAnswer() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
+
+// =========================
+// Mode start
+// =========================
+function startNormalMode() {
+  isReviewMode = false;
+  missedWords = [];
+  score = 0;
+  missCount = 0;
+  currentIndex = 0;
+  quizData = shuffleArray(originalQuizData);
+  showQuizUI();
+  updateHearts();
+  loadQuestion();
+}
+
+function startReviewMode() {
+  if (missedWords.length === 0) return;
+
+  isReviewMode = true;
+  score = 0;
+  missCount = 0;
+  currentIndex = 0;
+  quizData = shuffleArray(missedWords);
+  missedWords = [];
+  showQuizUI();
+  updateHearts();
   loadQuestion();
 }
 
 // =========================
-// ゲームオーバー
+// UI switching
+// =========================
+function showQuizUI() {
+  quizForm.style.display = "block";
+  playAudioBtn.style.display = "inline-block";
+  endButtons.style.display = "none";
+  answerInput.style.display = "block";
+  checkBtn.style.display = "inline-block";
+}
+
+function showEndUI() {
+  quizForm.style.display = "none";
+  playAudioBtn.style.display = "none";
+  endButtons.style.display = "block";
+  reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
+}
+
+// =========================
+// Load question
+// =========================
+function loadQuestion() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  const q = quizData[currentIndex];
+
+  answerInput.value = "";
+  resultEl.textContent = "";
+  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
+
+  answerInput.disabled = false;
+  checkBtn.disabled = false;
+
+  isAnswered = false;
+  playCount = 0;
+
+  setStateImage("idle");
+  updatePlayCountText();
+  updateHearts();
+
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
+
+  answerInput.focus();
+}
+
+// =========================
+// Check answer
+// =========================
+function checkAnswer() {
+  if (!canCheckAnswer()) return;
+
+  const userAnswer = answerInput.value.trim().toLowerCase();
+  const correctAnswer = quizData[currentIndex].word.toLowerCase();
+
+  isAnswered = true;
+  answerInput.disabled = true;
+  checkBtn.disabled = true;
+
+  if (userAnswer === correctAnswer) {
+    resultEl.textContent = "Correct! Next question in 3 seconds...";
+    score++;
+    setStateImage("correct");
+    playEffect(correctSound);
+  } else {
+    missCount++;
+    resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
+    setStateImage("incorrect");
+    playEffect(incorrectSound);
+    missedWords.push(quizData[currentIndex]);
+    updateHearts();
+  }
+
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
+
+  if (missCount >= maxMisses) {
+    autoNextTimer = setTimeout(() => {
+      gameOver();
+    }, 1500);
+    return;
+  }
+
+  autoNextTimer = setTimeout(() => {
+    nextQuestion();
+  }, 3000);
+}
+
+// =========================
+// Next question
+// =========================
+function nextQuestion() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  currentIndex++;
+
+  if (currentIndex < quizData.length) {
+    loadQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+// =========================
+// Finish / Game Over
 // =========================
 function gameOver() {
-  resultEl.textContent = `Game Over! Score: ${score}/${quizData.length}`;
-  endButtons.style.display = "block";
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  setStateImage("incorrect");
+  hintEl.textContent = "Game Over";
+  resultEl.textContent = `Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
+  playCountText.textContent = "";
+  showEndUI();
+}
+
+function finishQuiz() {
+  setStateImage("idle");
+  playCountText.textContent = "";
+
+  if (isReviewMode) {
+    if (missedWords.length > 0) {
+      resultEl.textContent = `Review finished. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses} | Remaining mistakes: ${missedWords.length}`;
+    } else {
+      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
+    }
+  } else {
+    resultEl.textContent = `Finished! Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
+  }
+
+  hintEl.textContent = "";
+  showEndUI();
 }
 
 // =========================
-// 完了
+// Events
 // =========================
-function finish() {
-  resultEl.textContent = `Finished! Score: ${score}/${quizData.length}`;
-  endButtons.style.display = "block";
-}
-
-// =========================
-// イベント
-// =========================
-playBtn.onclick = () => {
+playAudioBtn.addEventListener("click", () => {
+  if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
-};
+});
 
-form.onsubmit = (e) => {
+quizForm.addEventListener("submit", (e) => {
   e.preventDefault();
   checkAnswer();
-};
+});
+
+answerInput.addEventListener("input", () => {
+  if (isAnswered) return;
+
+  if (answerInput.value.trim() === "") {
+    setStateImage("idle");
+  } else {
+    setStateImage("typing");
+  }
+});
 
 document.addEventListener("keydown", (e) => {
+  if (endButtons.style.display === "block") return;
+
   if (e.code === "Enter") {
+    if (!canCheckAnswer()) return;
     e.preventDefault();
     checkAnswer();
+    return;
   }
 
   if (e.code === "Space") {
+    if (!canPlayAudio()) return;
     e.preventDefault();
     playWord(quizData[currentIndex].word);
   }
 });
 
-restartBtn.onclick = startGame;
+reviewBtn.addEventListener("click", () => {
+  startReviewMode();
+});
+
+restartBtn.addEventListener("click", () => {
+  startNormalMode();
+});
 
 // =========================
-// 開始
+// Start
 // =========================
-function startGame() {
-  quizData = shuffle(originalQuizData);
-  currentIndex = 0;
-  score = 0;
-  missCount = 0;
-
-  updateHearts();
-  endButtons.style.display = "none";
-
-  loadQuestion();
-}
-
-startGame();
+startNormalMode();
