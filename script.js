@@ -22,6 +22,9 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 const stateImage = document.getElementById("stateImage");
 
+const correctSound = new Audio("audio/correct.mp3");
+const incorrectSound = new Audio("audio/incorrect.mp3");
+
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -93,9 +96,18 @@ function checkAnswer() {
     resultEl.textContent = "Correct! Next question in 3 seconds...";
     score++;
     setStateImage("correct");
+
+    // 🔊 正解音
+    correctSound.currentTime = 0;
+    correctSound.play();
+
   } else {
     resultEl.textContent = `Incorrect. Answer: ${quizData[currentIndex].word}. Next question in 3 seconds...`;
     setStateImage("incorrect");
+
+    // 🔊 不正解音
+    incorrectSound.currentTime = 0;
+    incorrectSound.play();
   }
 
   scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
@@ -104,7 +116,6 @@ function checkAnswer() {
     nextQuestion();
   }, 3000);
 }
-
 function nextQuestion() {
   if (autoNextTimer) {
     clearTimeout(autoNextTimer);
