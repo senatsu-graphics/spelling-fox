@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Spelling Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6fb;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .container {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      width: 360px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 12px 0;
+    }
+
+    button {
+      padding: 10px 14px;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Spelling Quiz</h1>
+
+    <p id="question"></p>
+
+    <button onclick="playAudio()">🔊 Play</button>
+
+    <input id="answer" placeholder="Type the word">
+    <br>
+
+    <button onclick="check()">Check</button>
+    <button onclick="next()">Next</button>
+
+    <p id="result"></p>
+    <p id="score"></p>
+
+    <audio id="audio"></audio>
+  </div>
+
+  <script>
+    const quiz = [
+      { word: "apple", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+      { word: "because", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+      { word: "friend", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
+    ];
+
+    let index = 0;
+    let score = 0;
+
+    function load() {
+      document.getElementById("question").innerText =
+        "Listen and type the word";
+
+      document.getElementById("audio").src = quiz[index].audio;
+      document.getElementById("answer").value = "";
+      document.getElementById("result").innerText = "";
+      document.getElementById("score").innerText =
+        "Score: " + score + " / " + quiz.length;
+    }
+
+    function playAudio() {
+      const audio = document.getElementById("audio");
+      audio.currentTime = 0;
+      audio.play();
+    }
+
+    function check() {
+      const input = document.getElementById("answer").value.toLowerCase();
+      const correct = quiz[index].word;
+
+      if (input === correct) {
+        document.getElementById("result").innerText = "Correct!";
+        score++;
+      } else {
+        document.getElementById("result").innerText =
+          "Wrong! Answer: " + correct;
+      }
+    }
+
+    function next() {
+      index++;
+
+      if (index >= quiz.length) {
+        document.getElementById("question").innerText = "Finished!";
+        document.getElementById("result").innerText =
+          "Final Score: " + score;
+        return;
+      }
+
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>
