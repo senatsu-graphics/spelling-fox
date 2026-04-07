@@ -1,5 +1,5 @@
 // =========================
-// 単語（ここだけ編集OK）
+// Add words here (one per line)
 // =========================
 const wordString = `
 apple
@@ -13,50 +13,48 @@ pineapple
 `;
 
 // =========================
-// データ生成
+// Create original data
 // =========================
 const originalQuizData = wordString
   .split(/\n+/)
-  .map(w => w.trim())
-  .filter(w => w !== "")
-  .map(w => ({ word: w }));
+  .map(word => word.trim())
+  .filter(word => word !== "")
+  .map(word => ({ word, hint: "" }));
 
 // =========================
-// 状態
+// State
 // =========================
 let quizData = [];
 let currentIndex = 0;
 let score = 0;
-let missCount = 0;
-const maxMisses = 3;
-
 let playCount = 0;
 const maxPlay = 2;
-
 let isAnswered = false;
 let autoNextTimer = null;
 let missedWords = [];
 let isReviewMode = false;
 
+let missCount = 0;
+const maxMisses = 3;
+
 // =========================
-// 要素
+// Elements
 // =========================
+const quizForm = document.getElementById("quizForm");
+const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
 const resultEl = document.getElementById("result");
 const scoreEl = document.getElementById("score");
-const hintEl = document.getElementById("hint");
 const playCountText = document.getElementById("playCountText");
 
-const playBtn = document.getElementById("playAudioBtn");
-const form = document.getElementById("quizForm");
-
+const playAudioBtn = document.getElementById("playAudioBtn");
+const checkBtn = document.getElementById("checkBtn");
 const stateImage = document.getElementById("stateImage");
 
+const endButtons = document.getElementById("endButtons");
 const reviewBtn = document.getElementById("reviewBtn");
 const restartBtn = document.getElementById("restartBtn");
-const endButtons = document.getElementById("endButtons");
 
-// ❤️ ハート
 const hearts = [
   document.getElementById("heart1"),
   document.getElementById("heart2"),
@@ -64,7 +62,30 @@ const hearts = [
 ];
 
 // =========================
-// 画像
+// Safety check
+// =========================
+const requiredElements = [
+  quizForm,
+  hintEl,
+  answerInput,
+  resultEl,
+  scoreEl,
+  playCountText,
+  playAudioBtn,
+  checkBtn,
+  stateImage,
+  endButtons,
+  reviewBtn,
+  restartBtn,
+  ...hearts
+];
+
+if (requiredElements.some(el => !el)) {
+  throw new Error("HTML element missing. Check id names in index.html.");
+}
+
+// =========================
+// Images and sounds
 // =========================
 const imagePaths = {
   idle: "images/idle.png",
@@ -77,17 +98,28 @@ const imagePaths = {
 const HEART_BLACK = "images/Heart-black.png";
 const HEART_WHITE = "images/Heart-white.png";
 
-// =========================
-// 音
-// =========================
 const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
+correctSound.preload = "auto";
+incorrectSound.preload = "auto";
+
 // =========================
-// ヘルパー
+// Helpers
 // =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
+}
+
+function updatePlayCountText() {
+  playCountText.textContent = `Audio plays left: ${maxPlay - playCount}`;
+}
+
+function updateHearts() {
+  const livesLeft = maxMisses - missCount;
+  hearts.forEach((heart, index) => {
+    heart.src = index < livesLeft ? HEART_BLACK : HEART_WHITE;
+  });
 }
 
 function shuffleArray(array) {
@@ -99,37 +131,45 @@ function shuffleArray(array) {
   return copied;
 }
 
-function updateHearts() {
-  const livesLeft = maxMisses - missCount;
+function playWord(word) {
+  if (playCount >= maxPlay) {
+    alert("You can only play the audio 2 times!");
+    return;
+  }
 
-  hearts.forEach((heart, i) => {
-    heart.src = i < livesLeft ? HEART_BLACK : HEART_WHITE;
-  });
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-US";
+  utterance.rate = 0.9;
+  speechSynthesis.speak(utterance);
+
+  playCount++;
+  updatePlayCountText();
 }
 
 function playEffect(sound) {
   sound.pause();
   sound.currentTime = 0;
-  sound.play().catch(() => {});
-}
-
-function playWord(word) {
-  if (playCount >= maxPlay) return;
-
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = "en-US";
-  speechSynthesis.speak(u);
-
-  playCount++;
+  sound.play().catch((error) => {
+    console.log("Effect sound could not play:", error);
+  });
 }
 
 function getScorePercent() {
-  return Math.round((score / quizData.length) * 100);
+  return quizData.length === 0 ? 0 : Math.round((score / quizData.length) * 100);
+}
+
+function canPlayAudio() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
+
+function canCheckAnswer() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
 }
 
 // =========================
-// ゲーム開始
+// Mode start
 // =========================
 function startNormalMode() {
   isReviewMode = false;
@@ -137,10 +177,8 @@ function startNormalMode() {
   score = 0;
   missCount = 0;
   currentIndex = 0;
-
   quizData = shuffleArray(originalQuizData);
-
-  endButtons.style.display = "none";
+  showQuizUI();
   updateHearts();
   loadQuestion();
 }
@@ -152,116 +190,179 @@ function startReviewMode() {
   score = 0;
   missCount = 0;
   currentIndex = 0;
-
   quizData = shuffleArray(missedWords);
   missedWords = [];
-
-  endButtons.style.display = "none";
+  showQuizUI();
   updateHearts();
   loadQuestion();
 }
 
 // =========================
-// 問題表示
+// UI switching
+// =========================
+function showQuizUI() {
+  quizForm.style.display = "block";
+  playAudioBtn.style.display = "inline-block";
+  endButtons.style.display = "none";
+  answerInput.style.display = "block";
+  checkBtn.style.display = "inline-block";
+}
+
+function showEndUI() {
+  quizForm.style.display = "none";
+  playAudioBtn.style.display = "none";
+  endButtons.style.display = "block";
+  reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
+}
+
+// =========================
+// Load question
 // =========================
 function loadQuestion() {
-  clearTimeout(autoNextTimer);
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  const q = quizData[currentIndex];
 
   answerInput.value = "";
   resultEl.textContent = "";
+  hintEl.textContent = q.hint ? `Hint: ${q.hint}` : "";
+
+  answerInput.disabled = false;
+  checkBtn.disabled = false;
+
   isAnswered = false;
   playCount = 0;
 
   setStateImage("idle");
+  updatePlayCountText();
   updateHearts();
+
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
 
   answerInput.focus();
 }
 
 // =========================
-// 判定
+// Check answer
 // =========================
 function checkAnswer() {
-  if (isAnswered) return;
+  if (!canCheckAnswer()) return;
 
-  const user = answerInput.value.trim().toLowerCase();
-  const correct = quizData[currentIndex].word.toLowerCase();
+  const userAnswer = answerInput.value.trim().toLowerCase();
+  const correctAnswer = quizData[currentIndex].word.toLowerCase();
 
   isAnswered = true;
+  answerInput.disabled = true;
+  checkBtn.disabled = true;
 
-  if (user === correct) {
+  if (userAnswer === correctAnswer) {
+    resultEl.textContent = "Correct! Next question in 3 seconds...";
     score++;
     setStateImage("correct");
     playEffect(correctSound);
   } else {
     missCount++;
-    missedWords.push(quizData[currentIndex]);
-
+    resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
+    missedWords.push(quizData[currentIndex]);
     updateHearts();
-
-    if (missCount >= maxMisses) {
-      setTimeout(gameOver, 1500);
-      return;
-    }
   }
 
-  autoNextTimer = setTimeout(nextQuestion, 2000);
-}
+  const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
 
-// =========================
-// 次の問題
-// =========================
-function nextQuestion() {
-  currentIndex++;
-
-  if (currentIndex >= quizData.length) {
-    finish();
+  if (missCount >= maxMisses) {
+    autoNextTimer = setTimeout(() => {
+      gameOver();
+    }, 1500);
     return;
   }
 
-  loadQuestion();
+  autoNextTimer = setTimeout(() => {
+    nextQuestion();
+  }, 3000);
 }
 
 // =========================
-// 終了
+// Next question
+// =========================
+function nextQuestion() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  currentIndex++;
+
+  if (currentIndex < quizData.length) {
+    loadQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+// =========================
+// Finish / Game Over
 // =========================
 function gameOver() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
   setStateImage("gameover");
-
   hintEl.innerHTML = `<span class="big-title">GAME OVER</span>`;
-
   resultEl.innerHTML = `
     <span class="big-score">${getScorePercent()}%</span><br>
     ${score} / ${quizData.length}
   `;
-
-  endButtons.style.display = "block";
+  playCountText.textContent = "";
+  showEndUI();
 }
 
-function finish() {
+function finishQuiz() {
+  setStateImage("idle");
   hintEl.innerHTML = `<span class="big-title">RESULT</span>`;
-
   resultEl.innerHTML = `
     <span class="big-score">${getScorePercent()}%</span><br>
     ${score} / ${quizData.length}
   `;
-
-  endButtons.style.display = "block";
+  playCountText.textContent = "";
+  showEndUI();
 }
 
 // =========================
-// イベント
+// Events
 // =========================
-playBtn.onclick = () => {
+playAudioBtn.addEventListener("click", () => {
+  if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
-};
+});
 
-form.onsubmit = (e) => {
+checkBtn.addEventListener("click", (e) => {
   e.preventDefault();
   checkAnswer();
-};
+});
+
+quizForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  checkAnswer();
+});
+
+answerInput.addEventListener("input", () => {
+  if (isAnswered) return;
+
+  if (answerInput.value.trim() === "") {
+    setStateImage("idle");
+  } else {
+    setStateImage("typing");
+  }
+});
 
 document.addEventListener("keydown", (e) => {
   if (endButtons.style.display === "block") return;
@@ -269,6 +370,7 @@ document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
     e.preventDefault();
     checkAnswer();
+    return;
   }
 
   if (e.code === "Space") {
@@ -277,10 +379,15 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-reviewBtn.onclick = startReviewMode;
-restartBtn.onclick = startNormalMode;
+reviewBtn.addEventListener("click", () => {
+  startReviewMode();
+});
+
+restartBtn.addEventListener("click", () => {
+  startNormalMode();
+});
 
 // =========================
-// 初期化
+// Start
 // =========================
 startNormalMode();
