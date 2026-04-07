@@ -13,7 +13,7 @@ pineapple
 `;
 
 // =========================
-// 元データ作成
+// 元データ
 // =========================
 const originalQuizData = wordString
   .split(/\n+/)
@@ -65,6 +65,9 @@ const imagePaths = {
 const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
+correctSound.preload = "auto";
+incorrectSound.preload = "auto";
+
 // =========================
 // 共通関数
 // =========================
@@ -103,8 +106,19 @@ function playWord(word) {
 }
 
 function playEffect(sound) {
+  sound.pause();
   sound.currentTime = 0;
-  sound.play().catch(() => {});
+  sound.play().catch((error) => {
+    console.log("Effect sound could not play:", error);
+  });
+}
+
+function canPlayAudio() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
+}
+
+function canCheckAnswer() {
+  return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
 }
 
 // =========================
@@ -189,7 +203,7 @@ function loadQuestion() {
 // 判定
 // =========================
 function checkAnswer() {
-  if (isAnswered) return;
+  if (!canCheckAnswer()) return;
 
   const userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = quizData[currentIndex].word.toLowerCase();
@@ -207,8 +221,6 @@ function checkAnswer() {
     resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
-
-    // 間違えた単語を復習用に保存
     missedWords.push(quizData[currentIndex]);
   }
 
@@ -224,6 +236,11 @@ function checkAnswer() {
 // 次の問題
 // =========================
 function nextQuestion() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
   currentIndex++;
 
   if (currentIndex < quizData.length) {
@@ -234,7 +251,7 @@ function nextQuestion() {
 }
 
 // =========================
-// 終了処理
+// 終了
 // =========================
 function finishQuiz() {
   setStateImage("idle");
@@ -258,23 +275,17 @@ function finishQuiz() {
 // イベント
 // =========================
 playAudioBtn.addEventListener("click", () => {
-  if (quizData.length === 0 || isAnswered) return;
+  if (!canPlayAudio()) return;
   playWord(quizData[currentIndex].word);
 });
 
+// ボタンでCheck
 quizForm.addEventListener("submit", (e) => {
   e.preventDefault();
   checkAnswer();
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
-    if (quizData.length === 0 || isAnswered) return;
-    e.preventDefault();
-    playWord(quizData[currentIndex].word);
-  }
-});
-
+// 入力中画像
 answerInput.addEventListener("input", () => {
   if (isAnswered) return;
 
@@ -282,6 +293,25 @@ answerInput.addEventListener("input", () => {
     setStateImage("idle");
   } else {
     setStateImage("typing");
+  }
+});
+
+// EnterでCheck、SpaceでPlay
+document.addEventListener("keydown", (e) => {
+  // 終了画面中は無視
+  if (endButtons.style.display === "block") return;
+
+  if (e.code === "Enter") {
+    if (!canCheckAnswer()) return;
+    e.preventDefault();
+    checkAnswer();
+    return;
+  }
+
+  if (e.code === "Space") {
+    if (!canPlayAudio()) return;
+    e.preventDefault();
+    playWord(quizData[currentIndex].word);
   }
 });
 
