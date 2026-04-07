@@ -37,6 +37,7 @@ const playCountText = document.getElementById("playCountText");
 
 const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
+const nextBtn = document.getElementById("nextBtn");
 const stateImage = document.getElementById("stateImage");
 
 const endButtons = document.getElementById("endButtons");
@@ -133,6 +134,10 @@ function canCheckAnswer() {
   return quizData.length > 0 && currentIndex < quizData.length && !isAnswered;
 }
 
+function canSkipToNext() {
+  return quizData.length > 0 && currentIndex < quizData.length;
+}
+
 function hideFeedback() {
   feedbackBox.style.display = "none";
   compareBox.style.display = "none";
@@ -216,15 +221,11 @@ function startReviewMode() {
 
 function showQuizUI() {
   quizForm.style.display = "block";
-  playAudioBtn.style.display = "inline-block";
   endButtons.style.display = "none";
-  answerInput.style.display = "block";
-  checkBtn.style.display = "inline-block";
 }
 
 function showEndUI() {
   quizForm.style.display = "none";
-  playAudioBtn.style.display = "none";
   endButtons.style.display = "block";
   reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
 }
@@ -276,7 +277,7 @@ function checkAnswer() {
     hideFeedback();
   } else {
     missCount++;
-    resultEl.textContent = "Incorrect!";
+    resultEl.textContent = "Incorrect! Next question in 5 seconds...";
     setStateImage("incorrect");
     playEffect(incorrectSound);
     missedWords.push(quizData[currentIndex]);
@@ -295,9 +296,11 @@ function checkAnswer() {
     return;
   }
 
+  const delay = userAnswer === correctAnswer ? 3000 : 5000;
+
   autoNextTimer = setTimeout(() => {
     nextQuestion();
-  }, 3000);
+  }, delay);
 }
 
 function nextQuestion() {
@@ -350,6 +353,11 @@ playAudioBtn.addEventListener("click", () => {
 checkBtn.addEventListener("click", (e) => {
   e.preventDefault();
   checkAnswer();
+});
+
+nextBtn.addEventListener("click", () => {
+  if (!canSkipToNext()) return;
+  nextQuestion();
 });
 
 quizForm.addEventListener("submit", (e) => {
