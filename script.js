@@ -1,4 +1,4 @@
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHeZLFurXjdkezFR3sej3EgIX3qOLz7ZL8Lr8SWyJjJXk-EBkULSpmilORsVDNPKYgiSasvsu4yG2/pubhtml?gid=0&single=true";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHeZLFurXjdkezFR3sej3EgIX3qOLz7ZL8Lr8SWyJjJXk-EBkULSpmilORsVDNPKYgiSasvsu4yG2/pub?output=csv";
 
 let quizData = [];
 let currentIndex = 0;
