@@ -17,6 +17,14 @@ body {
 h1 {
   margin-top: 0;
   font-size: 28px;
+  text-align: center;
+}
+
+#stateImage {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  margin: 16px auto;
 }
 
 input {
@@ -24,6 +32,7 @@ input {
   padding: 10px;
   margin: 12px 0;
   box-sizing: border-box;
+  font-size: 16px;
 }
 
 button {
@@ -39,4 +48,10 @@ button {
 #result {
   margin-top: 16px;
   font-weight: bold;
+}
+
+#score,
+#playCountText,
+#hint {
+  margin-top: 8px;
 }
