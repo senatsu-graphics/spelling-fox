@@ -8,6 +8,7 @@ let currentIndex = 0;
 let score = 0;
 let playCount = 0;
 const maxPlay = 2;
+let isAnswered = false;
 
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -20,7 +21,6 @@ const checkBtn = document.getElementById("checkBtn");
 const nextBtn = document.getElementById("nextBtn");
 const stateImage = document.getElementById("stateImage");
 
-// 画像の切り替え先
 const imagePaths = {
   idle: "images/idle.png",
   typing: "images/type.png",
@@ -47,7 +47,6 @@ function playWord(word) {
   const utterance = new SpeechSynthesisUtterance(word);
   utterance.lang = "en-US";
   utterance.rate = 0.9;
-
   speechSynthesis.speak(utterance);
 
   playCount++;
@@ -62,15 +61,20 @@ function loadQuestion() {
   resultEl.textContent = "";
 
   playCount = 0;
-  updatePlayCountText();
+  isAnswered = false;
 
+  updatePlayCountText();
   setStateImage("idle");
   scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
 }
 
 function checkAnswer() {
+  if (isAnswered) return;
+
   const userAnswer = answerInput.value.trim().toLowerCase();
   const correctAnswer = quizData[currentIndex].word.toLowerCase();
+
+  isAnswered = true;
 
   if (userAnswer === correctAnswer) {
     resultEl.textContent = "Correct!";
@@ -104,13 +108,13 @@ function nextQuestion() {
   }
 }
 
-// 音声はクリック時のみ
 playAudioBtn.addEventListener("click", () => {
   playWord(quizData[currentIndex].word);
 });
 
-// 入力中の画像切り替え
 answerInput.addEventListener("input", () => {
+  if (isAnswered) return;
+
   if (answerInput.value.trim() === "") {
     setStateImage("idle");
   } else {
