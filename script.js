@@ -25,6 +25,9 @@ let autoNextTimer = null;
 let missedWords = [];
 let isReviewMode = false;
 
+let missCount = 0;
+const maxMisses = 3;
+
 const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
@@ -107,6 +110,7 @@ function startNormalMode() {
   isReviewMode = false;
   missedWords = [];
   score = 0;
+  missCount = 0;
   currentIndex = 0;
   quizData = shuffleArray(originalQuizData);
   showQuizUI();
@@ -118,6 +122,7 @@ function startReviewMode() {
 
   isReviewMode = true;
   score = 0;
+  missCount = 0;
   currentIndex = 0;
   quizData = shuffleArray(missedWords);
   missedWords = [];
@@ -162,7 +167,7 @@ function loadQuestion() {
   updatePlayCountText();
 
   const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
-  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
 
   answerInput.focus();
 }
@@ -183,6 +188,7 @@ function checkAnswer() {
     setStateImage("correct");
     playEffect(correctSound);
   } else {
+    missCount++;
     resultEl.textContent = `Incorrect: ${quizData[currentIndex].word}`;
     setStateImage("incorrect");
     playEffect(incorrectSound);
@@ -190,7 +196,14 @@ function checkAnswer() {
   }
 
   const modeLabel = isReviewMode ? "Review Mode" : "Normal Mode";
-  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length}`;
+  scoreEl.textContent = `${modeLabel} | Score: ${score} / ${quizData.length} | Miss: ${missCount} / ${maxMisses}`;
+
+  if (missCount >= maxMisses) {
+    autoNextTimer = setTimeout(() => {
+      gameOver();
+    }, 1500);
+    return;
+  }
 
   autoNextTimer = setTimeout(() => {
     nextQuestion();
@@ -212,18 +225,31 @@ function nextQuestion() {
   }
 }
 
+function gameOver() {
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  setStateImage("incorrect");
+  hintEl.textContent = "Game Over";
+  resultEl.textContent = `Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
+  playCountText.textContent = "";
+  showEndUI();
+}
+
 function finishQuiz() {
   setStateImage("idle");
   playCountText.textContent = "";
 
   if (isReviewMode) {
     if (missedWords.length > 0) {
-      resultEl.textContent = `Review finished. You still have ${missedWords.length} mistake(s).`;
+      resultEl.textContent = `Review finished. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses} | Remaining mistakes: ${missedWords.length}`;
     } else {
-      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score}/${quizData.length}`;
+      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
     }
   } else {
-    resultEl.textContent = `Finished! Final Score: ${score}/${quizData.length}`;
+    resultEl.textContent = `Finished! Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
   }
 
   hintEl.textContent = "";
