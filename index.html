@@ -10,31 +10,28 @@
   <div class="quiz-container">
     <h1>Audio Spelling Quiz</h1>
 
-    <img id="stateImage" src="images/idle.png" alt="Quiz character" />
+    <!-- ❤️ HP表示 -->
+    <div id="hearts" class="hearts">
+      <img id="heart1" src="images/Heart-black.png">
+      <img id="heart2" src="images/Heart-black.png">
+      <img id="heart3" src="images/Heart-black.png">
+    </div>
 
-    <p id="hint"></p>
+    <img id="stateImage" src="images/idle.png" />
 
-    <button id="playAudioBtn" type="button">🔊 Play</button>
+    <button id="playAudioBtn">🔊 Play</button>
 
     <form id="quizForm">
-      <input
-        type="text"
-        id="answerInput"
-        placeholder="Type the word"
-        autocomplete="off"
-      />
-      <div class="button-row">
-        <button id="checkBtn" type="submit">Check</button>
-      </div>
+      <input id="answerInput" placeholder="Type the word" />
+      <button type="submit">Check</button>
     </form>
 
     <p id="result"></p>
     <p id="score"></p>
-    <p id="playCountText"></p>
 
-    <div id="endButtons" style="display: none;">
-      <button id="reviewBtn" type="button">Review Mistakes</button>
-      <button id="restartBtn" type="button">Restart All</button>
+    <div id="endButtons" style="display:none;">
+      <button id="reviewBtn">Review</button>
+      <button id="restartBtn">Restart</button>
     </div>
   </div>
 
