@@ -290,28 +290,43 @@ function gameOver() {
   }
 
   setStateImage("gameover");
-  hintEl.textContent = "Game Over";
-  resultEl.textContent = `Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
+
+  hintEl.innerHTML = `<span class="big-title">GAME OVER</span>`;
+
+  resultEl.innerHTML = `
+    <span class="big-score">
+      ${getScorePercent()}%
+    </span>
+    <br>
+    ${score} / ${quizData.length}
+  `;
+
   playCountText.textContent = "";
   showEndUI();
 }
 
 function finishQuiz() {
   setStateImage("idle");
-  playCountText.textContent = "";
 
-  if (isReviewMode) {
-    if (missedWords.length > 0) {
-      resultEl.textContent = `Review finished. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses} | Remaining mistakes: ${missedWords.length}`;
-    } else {
-      resultEl.textContent = `Great! You cleared all review words. Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
-    }
-  } else {
-    resultEl.textContent = `Finished! Final Score: ${score} / ${quizData.length} | Misses: ${missCount} / ${maxMisses}`;
-  }
+  hintEl.innerHTML = `<span class="big-title">RESULT</span>`;
+
+  resultEl.innerHTML = `
+    <span class="big-score">
+      ${getScorePercent()}%
+    </span>
+    <br>
+    ${score} / ${quizData.length}
+  `;
+
+  playCountText.textContent = "";
+  showEndUI();
+}
 
   hintEl.textContent = "";
   showEndUI();
+}
+function getScorePercent() {
+  return Math.round((score / quizData.length) * 100);
 }
 
 // =========================
