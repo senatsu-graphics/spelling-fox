@@ -87,14 +87,7 @@ button:active {
 
 .button-row button {
   flex: 1;
-}
-
-#playAudioBtn {
-  margin-right: 4px;
-}
-
-#checkBtn {
-  margin-left: 4px;
+  min-width: 0;
 }
 
 #result {
@@ -129,7 +122,6 @@ button:active {
   text-align: center;
 }
 
-/* 追加ここから */
 .feedback-box {
   text-align: left;
   background: #fafafa;
@@ -201,7 +193,6 @@ button:active {
   border-radius: 4px;
   padding: 0 1px;
 }
-/* 追加ここまで */
 
 @media (max-width: 480px) {
   .quiz-container {
