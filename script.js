@@ -121,9 +121,8 @@ function nextQuestion() {
     scoreEl.textContent = "";
     playCountText.textContent = "";
 
-    answerInput.style.display = "none";
+    quizForm.style.display = "none";
     playAudioBtn.style.display = "none";
-    checkBtn.style.display = "none";
 
     setStateImage("idle");
   }
@@ -146,6 +145,16 @@ answerInput.addEventListener("input", () => {
 quizForm.addEventListener("submit", (event) => {
   event.preventDefault();
   checkAnswer();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+    if (document.activeElement === answerInput) return;
+    if (isAnswered) return;
+
+    event.preventDefault();
+    playWord(quizData[currentIndex].word);
+  }
 });
 
 loadQuestion();
