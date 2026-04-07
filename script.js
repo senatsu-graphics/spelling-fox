@@ -11,6 +11,7 @@ const maxPlay = 2;
 let isAnswered = false;
 let autoNextTimer = null;
 
+const quizForm = document.getElementById("quizForm");
 const hintEl = document.getElementById("hint");
 const answerInput = document.getElementById("answerInput");
 const resultEl = document.getElementById("result");
@@ -74,6 +75,8 @@ function loadQuestion() {
   updatePlayCountText();
   setStateImage("idle");
   scoreEl.textContent = `Score: ${score} / ${quizData.length}`;
+
+  answerInput.focus();
 }
 
 function checkAnswer() {
@@ -140,13 +143,9 @@ answerInput.addEventListener("input", () => {
   }
 });
 
-answerInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    checkAnswer();
-  }
+quizForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  checkAnswer();
 });
-
-checkBtn.addEventListener("click", checkAnswer);
 
 loadQuestion();
