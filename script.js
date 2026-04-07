@@ -19,7 +19,6 @@ const playCountText = document.getElementById("playCountText");
 
 const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
-const nextBtn = document.getElementById("nextBtn");
 const stateImage = document.getElementById("stateImage");
 
 const imagePaths = {
@@ -122,7 +121,6 @@ function nextQuestion() {
     answerInput.style.display = "none";
     playAudioBtn.style.display = "none";
     checkBtn.style.display = "none";
-    nextBtn.style.display = "none";
 
     setStateImage("idle");
   }
@@ -139,6 +137,13 @@ answerInput.addEventListener("input", () => {
     setStateImage("idle");
   } else {
     setStateImage("typing");
+  }
+});
+
+answerInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    checkAnswer();
   }
 });
 
