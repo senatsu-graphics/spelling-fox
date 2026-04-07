@@ -100,6 +100,28 @@ button:active {
   background-color: #ddd;
 }
 
+/* ボタン横並び */
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ボタンを均等に広げる */
+.button-row button {
+  flex: 1;
+}
+
+/* 左右の余白調整 */
+#playAudioBtn {
+  margin-right: 4px;
+}
+
+#checkBtn {
+  margin-left: 4px;
+}
+
 /* =========================
    テキスト表示
 ========================= */
