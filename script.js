@@ -1,8 +1,13 @@
-const quizData = [
-  { word: "apple", hint: "" },
-  { word: "orange", hint: "" },
-  { word: "banana", hint: "" }
-];
+const wordString = `
+apple
+orange
+banana
+grape
+peach
+strawberry
+watermelon
+pineapple
+`;
 
 let currentIndex = 0;
 let score = 0;
