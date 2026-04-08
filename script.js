@@ -71,6 +71,7 @@ vehicle
 leisure
 weird
 foreign
+receive
 neighbor
 beige
 caffeine
