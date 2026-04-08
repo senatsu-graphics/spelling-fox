@@ -545,6 +545,9 @@ checkBtn.onclick = (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
+    // ⭐ Enter暴発防止
+    if (document.activeElement !== answerInput) return;
+
     e.preventDefault();
     checkAnswer();
   }
