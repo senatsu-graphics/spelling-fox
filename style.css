@@ -131,7 +131,7 @@ button:active {
   }
 
   50% {
-    background-color: #e6f0ff; /* ⭐ 薄い青 */
+    background-color: #9999ff; /* ⭐ 薄い青 */
     color: #2a5bd7;
     transform: scale(1.03);
   }
