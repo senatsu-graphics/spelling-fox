@@ -133,6 +133,15 @@ let missCount = 0;
 const maxMisses = 3;
 const maxPlay = 2;
 
+// 6秒タイマー
+let questionTimer = null;
+let timerAnimationFrame = null;
+let questionStartTime = 0;
+const questionTimeLimit = 6000;
+
+// Playボタン演出
+let playAttentionTimer = null;
+
 // =========================
 // LocalStorage Key
 // =========================
@@ -152,6 +161,7 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 
 const stateImage = document.getElementById("stateImage");
+const timerBar = document.getElementById("timerBar");
 
 const hearts = [
   document.getElementById("heart1"),
@@ -349,7 +359,6 @@ function saveResultToHistory(finalPercent) {
   const playerName = getPlayerName();
   const today = getTodayString();
   const time = getCurrentTimeString();
-
   const allHistory = getAllHistory();
 
   if (!allHistory[playerName]) {
@@ -369,8 +378,8 @@ function getPlayerHistoryToday() {
   const playerName = getPlayerName();
   const today = getTodayString();
   const allHistory = getAllHistory();
-
   const playerHistory = allHistory[playerName] || [];
+
   return playerHistory.filter(item => item.date === today);
 }
 
@@ -380,7 +389,6 @@ function getPlayerBestScore() {
   const playerHistory = allHistory[playerName] || [];
 
   if (playerHistory.length === 0) return null;
-
   return Math.max(...playerHistory.map(item => item.score));
 }
 
@@ -429,6 +437,97 @@ function hideSummary() {
 }
 
 // =========================
+// タイマー
+// =========================
+function stopQuestionTimer() {
+  if (questionTimer) {
+    clearTimeout(questionTimer);
+    questionTimer = null;
+  }
+
+  if (timerAnimationFrame) {
+    cancelAnimationFrame(timerAnimationFrame);
+    timerAnimationFrame = null;
+  }
+}
+
+function resetTimerBar() {
+  if (!timerBar) return;
+  timerBar.style.width = "100%";
+}
+
+function animateTimerBar() {
+  if (!timerBar) return;
+
+  const elapsed = Date.now() - questionStartTime;
+  const remaining = Math.max(0, questionTimeLimit - elapsed);
+  const percent = (remaining / questionTimeLimit) * 100;
+
+  timerBar.style.width = `${percent}%`;
+
+  if (remaining > 0) {
+    timerAnimationFrame = requestAnimationFrame(animateTimerBar);
+  }
+}
+
+function handleTimeUp() {
+  if (isAnswered) return;
+
+  isAnswered = true;
+  stopQuestionTimer();
+
+  missCount++;
+  resultEl.textContent = "Time up!";
+  setStateImage("incorrect");
+  playEffect(incorrectSound);
+  updateHearts();
+
+  const correct = quizData[currentIndex].word.toLowerCase();
+  showIncorrect("", correct);
+
+  if (missCount >= maxMisses) {
+    autoNextTimer = setTimeout(gameOver, 1500);
+    return;
+  }
+
+  autoNextTimer = setTimeout(nextQuestion, 5000);
+}
+
+function startQuestionTimer() {
+  stopQuestionTimer();
+  resetTimerBar();
+
+  questionStartTime = Date.now();
+  animateTimerBar();
+
+  questionTimer = setTimeout(() => {
+    handleTimeUp();
+  }, questionTimeLimit);
+}
+
+// =========================
+// Playボタン演出
+// =========================
+function stopPlayAttention() {
+  playAudioBtn.classList.remove("attention");
+
+  if (playAttentionTimer) {
+    clearTimeout(playAttentionTimer);
+    playAttentionTimer = null;
+  }
+}
+
+function startPlayAttention() {
+  stopPlayAttention();
+  playAudioBtn.classList.add("attention");
+
+  playAttentionTimer = setTimeout(() => {
+    playAudioBtn.classList.remove("attention");
+    playAttentionTimer = null;
+  }, 5000);
+}
+
+// =========================
 // 問題
 // =========================
 function loadQuestion() {
@@ -436,6 +535,8 @@ function loadQuestion() {
     clearTimeout(autoNextTimer);
     autoNextTimer = null;
   }
+
+  stopQuestionTimer();
 
   answerInput.value = "";
   resultEl.textContent = "";
@@ -446,8 +547,10 @@ function loadQuestion() {
   setStateImage("idle");
   updateHearts();
   hideFeedback();
+  resetTimerBar();
 
   answerInput.focus();
+  startQuestionTimer();
 }
 
 // =========================
@@ -455,6 +558,8 @@ function loadQuestion() {
 // =========================
 function checkAnswer() {
   if (isAnswered) return;
+
+  stopQuestionTimer();
 
   const user = answerInput.value.trim().toLowerCase();
   const correct = quizData[currentIndex].word.toLowerCase();
@@ -495,6 +600,8 @@ function nextQuestion() {
     autoNextTimer = null;
   }
 
+  stopQuestionTimer();
+
   currentIndex++;
 
   if (currentIndex >= quizData.length) {
@@ -509,6 +616,9 @@ function nextQuestion() {
 // 終了
 // =========================
 function endGameScreen(titleText) {
+  stopQuestionTimer();
+  stopPlayAttention();
+
   const finalPercent = Math.round((score / quizData.length) * 100);
 
   savePlayerName();
@@ -535,6 +645,8 @@ function finish() {
 // =========================
 playAudioBtn.onclick = () => {
   if (!quizData.length) return;
+
+  stopPlayAttention();
   playWord(quizData[currentIndex].word);
 };
 
@@ -545,7 +657,6 @@ checkBtn.onclick = (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
-    // ⭐ Enter暴発防止
     if (document.activeElement !== answerInput) return;
 
     e.preventDefault();
@@ -553,8 +664,12 @@ document.addEventListener("keydown", (e) => {
   }
 
   if (e.code === "Space") {
+    if (document.activeElement === playerNameInput) return;
+
     e.preventDefault();
     if (!quizData.length) return;
+
+    stopPlayAttention();
     playWord(quizData[currentIndex].word);
   }
 });
@@ -565,6 +680,20 @@ playerNameInput.addEventListener("input", () => {
   savePlayerName();
 });
 
+playerNameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    answerInput.focus();
+  }
+});
+
+answerInput.addEventListener("input", () => {
+  if (answerInput.value.trim() !== "") {
+    setStateImage("typing");
+  } else {
+    setStateImage("idle");
+  }
+});
 
 // =========================
 // 開始
@@ -582,6 +711,10 @@ function startGame() {
     autoNextTimer = null;
   }
 
+  stopQuestionTimer();
+  stopPlayAttention();
+  resetTimerBar();
+
   endButtons.style.display = "none";
   hintEl.textContent = "";
   resultEl.textContent = "";
@@ -590,13 +723,7 @@ function startGame() {
   updateHearts();
   hideFeedback();
   loadQuestion();
-
-    // ⭐ ボタン5秒だけアニメーション
-  playAudioBtn.classList.add("attention");
-
-  setTimeout(() => {
-    playAudioBtn.classList.remove("attention");
-  }, 5000);
+  startPlayAttention();
 }
 
 loadPlayerName();
