@@ -220,11 +220,11 @@ function playEffect(sound) {
 function hideFeedback() {
   feedbackBox.style.display = "none";
   compareBox.style.display = "none";
+  correctAnswerText.textContent = "";
   userCompare.innerHTML = "";
   correctCompare.innerHTML = "";
 }
 
-//不正解ハイライト表示調整
 function escapeHtml(str) {
   return str
     .replace(/&/g, "&amp;")
@@ -234,7 +234,7 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
-function buildDiffHtml(user, correct) {
+function buildCompareHtml(user, correct) {
   const maxLen = Math.max(user.length, correct.length);
   let userHtml = "";
   let correctHtml = "";
@@ -243,15 +243,34 @@ function buildDiffHtml(user, correct) {
     const u = user[i] ?? "";
     const c = correct[i] ?? "";
 
-    const safeU = escapeHtml(u === " " ? "␠" : u);
-    const safeC = escapeHtml(c === " " ? "␠" : c);
+    const safeU = escapeHtml(u);
+    const safeC = escapeHtml(c);
 
     if (u === c) {
-      userHtml += `<span class="same">${safeU}</span>`;
-      correctHtml += `<span class="same">${safeC}</span>`;
+      if (u !== "") {
+        userHtml += `<span class="char-correct">${safeU}</span>`;
+      }
+      if (c !== "") {
+        correctHtml += `<span class="char-correct">${safeC}</span>`;
+      }
     } else {
-      userHtml += `<span class="diff">${safeU || "∅"}</span>`;
-      correctHtml += `<span class="diff">${safeC || "∅"}</span>`;
+      // ユーザー側
+      if (u === "") {
+        userHtml += `<span class="char-missing">_</span>`;
+      } else if (c === "") {
+        userHtml += `<span class="char-extra">${safeU}</span>`;
+      } else {
+        userHtml += `<span class="char-wrong">${safeU}</span>`;
+      }
+
+      // 正解側
+      if (c === "") {
+        correctHtml += `<span class="char-extra">_</span>`;
+      } else if (u === "") {
+        correctHtml += `<span class="char-missing">${safeC}</span>`;
+      } else {
+        correctHtml += `<span class="char-wrong">${safeC}</span>`;
+      }
     }
   }
 
@@ -261,14 +280,11 @@ function buildDiffHtml(user, correct) {
 function showIncorrect(user, correct) {
   feedbackBox.style.display = "block";
   compareBox.style.display = "block";
-
-  // 上に出す「正解」
   correctAnswerText.textContent = correct;
 
-  // 下に並べる比較表示
-  const diff = buildDiffHtml(user, correct);
-  userCompare.innerHTML = diff.userHtml;
-  correctCompare.innerHTML = diff.correctHtml;
+  const compared = buildCompareHtml(user, correct);
+  userCompare.innerHTML = compared.userHtml;
+  correctCompare.innerHTML = compared.correctHtml;
 }
 
 // =========================
@@ -282,11 +298,9 @@ function loadQuestion() {
 
   answerInput.value = "";
   resultEl.textContent = "";
+  hintEl.textContent = "";
   isAnswered = false;
   playCount = 0;
-
-  // GAME OVER を消すために追加！！
-  hintEl.textContent = "";
 
   setStateImage("idle");
   updateHearts();
@@ -296,7 +310,7 @@ function loadQuestion() {
 }
 
 // =========================
-// 判定（修正済み）
+// 判定
 // =========================
 function checkAnswer() {
   if (isAnswered) return;
@@ -305,7 +319,6 @@ function checkAnswer() {
   const correct = quizData[currentIndex].word.toLowerCase();
 
   let isCorrect = false;
-
   isAnswered = true;
 
   if (user === correct) {
@@ -329,7 +342,6 @@ function checkAnswer() {
   }
 
   const delay = isCorrect ? 3000 : 5000;
-
   autoNextTimer = setTimeout(nextQuestion, delay);
 }
 
@@ -380,6 +392,7 @@ function finish() {
 // イベント
 // =========================
 playAudioBtn.onclick = () => {
+  if (!quizData.length) return;
   playWord(quizData[currentIndex].word);
 };
 
@@ -396,6 +409,7 @@ document.addEventListener("keydown", (e) => {
 
   if (e.code === "Space") {
     e.preventDefault();
+    if (!quizData.length) return;
     playWord(quizData[currentIndex].word);
   }
 });
@@ -410,15 +424,20 @@ function startGame() {
   currentIndex = 0;
   score = 0;
   missCount = 0;
+  playCount = 0;
+  isAnswered = false;
+
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
 
   endButtons.style.display = "none";
-
-  // ⭐ GAMEOVER消すために追加（安全）
   hintEl.textContent = "";
   resultEl.textContent = "";
 
   updateHearts();
-
+  hideFeedback();
   loadQuestion();
 }
 
