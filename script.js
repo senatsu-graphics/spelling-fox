@@ -590,6 +590,13 @@ function startGame() {
   updateHearts();
   hideFeedback();
   loadQuestion();
+
+    // ⭐ ボタン5秒だけアニメーション
+  playAudioBtn.classList.add("attention");
+
+  setTimeout(() => {
+    playAudioBtn.classList.remove("attention");
+  }, 5000);
 }
 
 loadPlayerName();
