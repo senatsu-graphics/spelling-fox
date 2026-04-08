@@ -9,7 +9,30 @@
 <body>
   <div class="quiz-container">
     <h1>Audio Spelling Quiz</h1>
+    <!-- ランキング -->
 
+    <div class="player-box">
+  <label for="playerNameInput" class="player-label">User Name</label>
+  <input
+    id="playerNameInput"
+    type="text"
+    placeholder="Enter your name"
+    maxlength="20"
+    autocomplete="off"
+  >
+</div>
+
+<div id="summaryBox" class="summary-box" style="display: none;">
+  <p><strong>User:</strong> <span id="summaryUserName"></span></p>
+  <p><strong>Score:</strong> <span id="summaryScore"></span></p>
+  <p><strong>Best Score:</strong> <span id="summaryBestScore"></span></p>
+
+  <div class="history-box">
+    <p><strong>Today's Results</strong></p>
+    <ol id="todayHistoryList"></ol>
+  </div>
+</div>
+    
     <!-- ❤️ ハート -->
     <div id="hearts" class="hearts">
       <img id="heart1" src="images/Heart-black.png" alt="heart">
