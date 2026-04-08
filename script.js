@@ -683,6 +683,7 @@ playerNameInput.addEventListener("input", () => {
 playerNameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
+    e.stopPropagation();
     answerInput.focus();
   }
 });
