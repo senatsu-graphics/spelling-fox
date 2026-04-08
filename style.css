@@ -3,26 +3,28 @@
 ========================= */
 body {
   font-family: Arial, sans-serif;
-  background: #f4f6fb;
+  background: linear-gradient(to bottom, #f4f6fb, #eef3fb);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: 40px;
   margin: 0;
+  color: #2c3440;
 }
 
 /* =========================
    コンテナ
 ========================= */
 .quiz-container {
-  background: white;
+  background: #ffffff;
   padding: 24px;
-  border-radius: 16px;
+  border-radius: 18px;
   width: 360px;
   max-width: 90%;
   margin: 0 auto;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(40, 55, 90, 0.08);
   text-align: center;
+  border: 1px solid #edf1f7;
 }
 
 /* =========================
@@ -30,7 +32,11 @@ body {
 ========================= */
 h1 {
   margin-top: 0;
+  margin-bottom: 18px;
   font-size: 28px;
+  font-weight: 700;
+  color: #253047;
+  letter-spacing: 0.2px;
 }
 
 /* =========================
@@ -56,7 +62,7 @@ h1 {
   width: 80%;
   max-width: 220px;
   margin: 20px auto;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 /* =========================
@@ -67,39 +73,79 @@ h1 {
 }
 
 /* =========================
+   プレイヤー名
+========================= */
+.player-box {
+  margin: 12px 0 16px;
+  text-align: left;
+}
+
+.player-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #6d7787;
+  font-weight: 600;
+}
+
+/* =========================
    入力欄
 ========================= */
 input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 14px;
   margin: 12px 0;
   font-size: 16px;
   box-sizing: border-box;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 1px solid #d7deea;
+  background: #fbfcfe;
+  color: #253047;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input::placeholder {
+  color: #a2acbb;
+}
+
+input:focus {
+  border-color: #9ab8ff;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(126, 166, 255, 0.12);
 }
 
 /* =========================
    ボタン共通
 ========================= */
 button {
-  padding: 10px 14px;
+  padding: 11px 14px;
   margin: 4px;
   cursor: pointer;
-  border-radius: 6px;
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #f7f9fc;
+  color: #2d394d;
+  border: 1px solid #dbe2ee;
   font-size: 14px;
-  transition: 0.15s;
+  font-weight: 600;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.15s ease,
+    box-shadow 0.18s ease;
 }
 
 button:hover {
-  background-color: #eaeaea;
+  background: #eef4ff;
+  border-color: #bfd2ff;
+  color: #2550b8;
+  box-shadow: 0 4px 12px rgba(80, 120, 220, 0.08);
 }
 
 button:active {
-  background-color: #ddd;
+  transform: scale(0.98);
+  background: #e6efff;
 }
 
 /* =========================
@@ -116,49 +162,50 @@ button:active {
   flex: 1;
   min-width: 0;
 }
+
 /* =========================
-   ボタン アニメーション
+   Playボタン強調
 ========================= */
+#playAudioBtn {
+  background: #f3f7ff;
+  border-color: #cfdcff;
+  color: #2b57c5;
+}
+
+#playAudioBtn:hover {
+  background: #e8f0ff;
+  border-color: #a9c0ff;
+  color: #1f4bb9;
+}
+
+/* 最初の5秒だけつけるアニメ用 */
 #playAudioBtn.attention {
   animation: softBluePulse 2s ease-in-out infinite;
 }
 
 @keyframes softBluePulse {
   0% {
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: #f3f7ff;
+    border-color: #cfdcff;
+    color: #2b57c5;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     transform: scale(1);
   }
 
   50% {
-    background-color: #9999ff; /* ⭐ 薄い青 */
-    color: #2a5bd7;
+    background-color: #dfeaff;
+    border-color: #9fbaff;
+    color: #1747b7;
+    box-shadow: 0 6px 18px rgba(88, 136, 255, 0.18);
     transform: scale(1.03);
   }
 
   100% {
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: #f3f7ff;
+    border-color: #cfdcff;
+    color: #2b57c5;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     transform: scale(1);
-  }
-}
-/* =========================
-   ボタン 影
-========================= */
-@keyframes softBluePulse {
-  0% {
-    background-color: #f5f5f5;
-    box-shadow: 0 0 0 rgba(0,0,0,0);
-  }
-
-  50% {
-    background-color: #e6f0ff;
-    box-shadow: 0 4px 14px rgba(0, 120, 255, 0.15);
-  }
-
-  100% {
-    background-color: #f5f5f5;
-    box-shadow: 0 0 0 rgba(0,0,0,0);
   }
 }
 
@@ -167,13 +214,15 @@ button:active {
 ========================= */
 #result {
   margin-top: 16px;
-  font-weight: bold;
+  font-weight: 700;
+  color: #2c3440;
 }
 
 #score,
 #playCountText,
 #hint {
   margin-top: 8px;
+  color: #5f6b7c;
 }
 
 /* =========================
@@ -188,11 +237,12 @@ button:active {
 ========================= */
 .big-title {
   font-size: 36px;
-  font-weight: bold;
-  color: #e74c3c;
+  font-weight: 800;
+  color: #e0564a;
   display: block;
   text-align: center;
   margin-bottom: 10px;
+  letter-spacing: 0.3px;
 }
 
 /* =========================
@@ -200,8 +250,8 @@ button:active {
 ========================= */
 .big-score {
   font-size: 52px;
-  font-weight: bold;
-  color: #2c3e50;
+  font-weight: 800;
+  color: #243247;
   display: block;
   text-align: center;
 }
@@ -211,9 +261,9 @@ button:active {
 ========================= */
 .feedback-box {
   text-align: left;
-  background: #fafafa;
-  border: 1px solid #e3e3e3;
-  border-radius: 10px;
+  background: #f9fbfe;
+  border: 1px solid #e1e8f2;
+  border-radius: 12px;
   padding: 12px;
   margin-bottom: 10px;
 }
@@ -221,26 +271,27 @@ button:active {
 .feedback-label {
   margin: 0 0 6px 0;
   font-size: 13px;
-  color: #666;
+  color: #6d7787;
+  font-weight: 600;
 }
 
 .correct-answer-text {
   margin: 0;
   font-size: 20px;
-  font-weight: bold;
-  color: #222;
+  font-weight: 700;
+  color: #223047;
   word-break: break-word;
 }
 
 .compare-box {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed #ddd;
+  border-top: 1px dashed #d9e2ee;
 }
 
 .compare-row {
   margin-top: 6px;
-  line-height: 1.7;
+  line-height: 1.75;
   word-break: break-word;
 }
 
@@ -248,72 +299,65 @@ button:active {
   display: inline-block;
   min-width: 70px;
   white-space: nowrap;
-  font-weight: bold;
-  color: #666;
+  font-weight: 700;
+  color: #6b7586;
 }
 
 .compare-text {
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 16px;
-}
-
-.char-correct {
-  color: #222;
-}
-
-.char-wrong {
-  background: #ffd6d6;
-  color: #b00020;
-  border-radius: 4px;
-  padding: 0 1px;
-}
-
-.char-missing {
-  background: #ffe9a8;
-  color: #7a5200;
-  border-radius: 4px;
-  padding: 0 1px;
-}
-
-.char-extra {
-  background: #dce9ff;
-  color: #174ea6;
-  border-radius: 4px;
-  padding: 0 1px;
+  letter-spacing: 0.4px;
 }
 
 /* =========================
-   ランキング
+   比較文字ハイライト
 ========================= */
-.player-box {
-  margin: 12px 0 16px;
-  text-align: left;
+.char-correct {
+  color: #243247;
 }
 
-.player-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: #666;
+.char-wrong {
+  background: #ffdfe0;
+  color: #b4232f;
+  border-radius: 4px;
+  padding: 0 2px;
 }
 
+.char-missing {
+  background: #fff0bc;
+  color: #8a5b00;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.char-extra {
+  background: #dfeaff;
+  color: #1c57b8;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+/* =========================
+   サマリー
+========================= */
 .summary-box {
   margin-top: 18px;
   padding: 14px;
-  border: 1px solid #e3e3e3;
-  border-radius: 10px;
-  background: #fafafa;
+  border: 1px solid #e1e8f2;
+  border-radius: 12px;
+  background: #f9fbfe;
   text-align: left;
 }
 
 .summary-box p {
   margin: 6px 0;
+  color: #2f3a4b;
 }
 
 .history-box {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed #ddd;
+  border-top: 1px dashed #d9e2ee;
 }
 
 #todayHistoryList {
@@ -323,6 +367,7 @@ button:active {
 
 #todayHistoryList li {
   margin: 4px 0;
+  color: #4c596d;
 }
 
 /* =========================
@@ -331,7 +376,7 @@ button:active {
 .shortcut-hint {
   margin-top: 16px;
   font-size: 12px;
-  color: #888;
+  color: #8893a3;
   text-align: center;
 }
 
@@ -340,8 +385,8 @@ button:active {
 ========================= */
 .copyright {
   margin-top: 8px;
-  font-size: 9px;
-  color: #C0C0C0;
+  font-size: 10px;
+  color: #b5bfcd;
   text-align: center;
 }
 
@@ -352,6 +397,11 @@ button:active {
   .quiz-container {
     width: 95%;
     padding: 16px;
+    border-radius: 16px;
+  }
+
+  h1 {
+    font-size: 24px;
   }
 
   .big-score {
