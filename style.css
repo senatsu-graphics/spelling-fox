@@ -238,6 +238,49 @@ button:active {
 }
 
 /* =========================
+   ランキング
+========================= */
+.player-box {
+  margin: 12px 0 16px;
+  text-align: left;
+}
+
+.player-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #666;
+}
+
+.summary-box {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  background: #fafafa;
+  text-align: left;
+}
+
+.summary-box p {
+  margin: 6px 0;
+}
+
+.history-box {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #ddd;
+}
+
+#todayHistoryList {
+  margin: 8px 0 0 20px;
+  padding: 0;
+}
+
+#todayHistoryList li {
+  margin: 4px 0;
+}
+
+/* =========================
    ショートカット説明
 ========================= */
 .shortcut-hint {
