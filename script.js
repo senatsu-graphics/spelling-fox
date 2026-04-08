@@ -494,6 +494,9 @@ function handleTimeUp() {
 }
 
 function startQuestionTimer() {
+    // ⭐ すでに動いてたら無視
+  if (questionTimer) return;
+  
   stopQuestionTimer();
   resetTimerBar();
 
@@ -550,9 +553,10 @@ function loadQuestion() {
   resetTimerBar();
 
   answerInput.focus();
-  startQuestionTimer();
-}
 
+  // ❌ ここはもう呼ばない
+  // startQuestionTimer();
+}
 // =========================
 // 判定
 // =========================
@@ -648,6 +652,8 @@ playAudioBtn.onclick = () => {
 
   stopPlayAttention();
   playWord(quizData[currentIndex].word);
+    // ⭐ 追加：ここでタイマー開始
+  startQuestionTimer();
 };
 
 checkBtn.onclick = (e) => {
@@ -671,6 +677,8 @@ document.addEventListener("keydown", (e) => {
 
     stopPlayAttention();
     playWord(quizData[currentIndex].word);
+      // ⭐ 追加
+    startQuestionTimer();
   }
 });
 
