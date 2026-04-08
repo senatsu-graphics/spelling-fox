@@ -247,6 +247,9 @@ function loadQuestion() {
   isAnswered = false;
   playCount = 0;
 
+  // GAME OVER を消すために追加！！
+  hintEl.textContent = "";
+
   setStateImage("idle");
   updateHearts();
   hideFeedback();
@@ -371,6 +374,11 @@ function startGame() {
   missCount = 0;
 
   endButtons.style.display = "none";
+
+  // ⭐ GAMEOVER消すために追加（安全）
+  hintEl.textContent = "";
+  resultEl.textContent = "";
+
   updateHearts();
 
   loadQuestion();
