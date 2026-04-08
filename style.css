@@ -120,21 +120,45 @@ button:active {
    ボタン アニメーション
 ========================= */
 #playAudioBtn.attention {
-  animation: softPulse 1.8s ease-in-out infinite;
+  animation: softBluePulse 2s ease-in-out infinite;
 }
 
-@keyframes softPulse {
+@keyframes softBluePulse {
   0% {
+    background-color: #f5f5f5;
+    color: #333;
     transform: scale(1);
-    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
   }
+
   50% {
-    transform: scale(1.04);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+    background-color: #e6f0ff; /* ⭐ 薄い青 */
+    color: #2a5bd7;
+    transform: scale(1.03);
   }
+
   100% {
+    background-color: #f5f5f5;
+    color: #333;
     transform: scale(1);
-    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+/* =========================
+   ボタン 影
+========================= */
+@keyframes softBluePulse {
+  0% {
+    background-color: #f5f5f5;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+  }
+
+  50% {
+    background-color: #e6f0ff;
+    box-shadow: 0 4px 14px rgba(0, 120, 255, 0.15);
+  }
+
+  100% {
+    background-color: #f5f5f5;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
   }
 }
 
