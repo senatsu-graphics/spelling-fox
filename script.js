@@ -137,7 +137,7 @@ const maxPlay = 2;
 let questionTimer = null;
 let timerAnimationFrame = null;
 let questionStartTime = 0;
-const questionTimeLimit = 6000;
+const questionTimeLimit = 10000;
 
 // Playボタン演出
 let playAttentionTimer = null;
