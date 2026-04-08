@@ -564,6 +564,13 @@ restartBtn.onclick = startGame;
 playerNameInput.addEventListener("input", () => {
   savePlayerName();
 });
+ //Enterを押したら自動で入力欄にとぶ
+playerNameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    answerInput.focus();
+  }
+});
 
 // =========================
 // 開始
