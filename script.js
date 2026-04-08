@@ -224,13 +224,51 @@ function hideFeedback() {
   correctCompare.innerHTML = "";
 }
 
+//不正解ハイライト表示調整
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildDiffHtml(user, correct) {
+  const maxLen = Math.max(user.length, correct.length);
+  let userHtml = "";
+  let correctHtml = "";
+
+  for (let i = 0; i < maxLen; i++) {
+    const u = user[i] ?? "";
+    const c = correct[i] ?? "";
+
+    const safeU = escapeHtml(u === " " ? "␠" : u);
+    const safeC = escapeHtml(c === " " ? "␠" : c);
+
+    if (u === c) {
+      userHtml += `<span class="same">${safeU}</span>`;
+      correctHtml += `<span class="same">${safeC}</span>`;
+    } else {
+      userHtml += `<span class="diff">${safeU || "∅"}</span>`;
+      correctHtml += `<span class="diff">${safeC || "∅"}</span>`;
+    }
+  }
+
+  return { userHtml, correctHtml };
+}
+
 function showIncorrect(user, correct) {
   feedbackBox.style.display = "block";
   compareBox.style.display = "block";
+
+  // 上に出す「正解」
   correctAnswerText.textContent = correct;
 
-  userCompare.innerHTML = user;
-  correctCompare.innerHTML = correct;
+  // 下に並べる比較表示
+  const diff = buildDiffHtml(user, correct);
+  userCompare.innerHTML = diff.userHtml;
+  correctCompare.innerHTML = diff.correctHtml;
 }
 
 // =========================
