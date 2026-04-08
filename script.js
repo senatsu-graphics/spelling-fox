@@ -131,8 +131,15 @@ let autoNextTimer = null;
 
 let missCount = 0;
 const maxMisses = 3;
-
 const maxPlay = 2;
+
+// =========================
+// LocalStorage Key
+// =========================
+const STORAGE_KEYS = {
+  playerName: "audioSpelling_playerName",
+  history: "audioSpelling_history"
+};
 
 // =========================
 // 要素
@@ -162,6 +169,14 @@ const endButtons = document.getElementById("endButtons");
 const reviewBtn = document.getElementById("reviewBtn");
 const restartBtn = document.getElementById("restartBtn");
 
+// 追加UI
+const playerNameInput = document.getElementById("playerNameInput");
+const summaryBox = document.getElementById("summaryBox");
+const summaryUserName = document.getElementById("summaryUserName");
+const summaryScore = document.getElementById("summaryScore");
+const summaryBestScore = document.getElementById("summaryBestScore");
+const todayHistoryList = document.getElementById("todayHistoryList");
+
 // =========================
 // 画像
 // =========================
@@ -183,7 +198,7 @@ const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
 // =========================
-// ヘルパー
+// 基本ヘルパー
 // =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
@@ -247,14 +262,9 @@ function buildCompareHtml(user, correct) {
     const safeC = escapeHtml(c);
 
     if (u === c) {
-      if (u !== "") {
-        userHtml += `<span class="char-correct">${safeU}</span>`;
-      }
-      if (c !== "") {
-        correctHtml += `<span class="char-correct">${safeC}</span>`;
-      }
+      if (u !== "") userHtml += `<span class="char-correct">${safeU}</span>`;
+      if (c !== "") correctHtml += `<span class="char-correct">${safeC}</span>`;
     } else {
-      // ユーザー側
       if (u === "") {
         userHtml += `<span class="char-missing">_</span>`;
       } else if (c === "") {
@@ -263,7 +273,6 @@ function buildCompareHtml(user, correct) {
         userHtml += `<span class="char-wrong">${safeU}</span>`;
       }
 
-      // 正解側
       if (c === "") {
         correctHtml += `<span class="char-extra">_</span>`;
       } else if (u === "") {
@@ -285,6 +294,138 @@ function showIncorrect(user, correct) {
   const compared = buildCompareHtml(user, correct);
   userCompare.innerHTML = compared.userHtml;
   correctCompare.innerHTML = compared.correctHtml;
+}
+
+// =========================
+// ユーザー名
+// =========================
+function getPlayerName() {
+  const name = playerNameInput.value.trim();
+  return name || "Guest";
+}
+
+function savePlayerName() {
+  localStorage.setItem(STORAGE_KEYS.playerName, playerNameInput.value.trim());
+}
+
+function loadPlayerName() {
+  const savedName = localStorage.getItem(STORAGE_KEYS.playerName);
+  if (savedName) {
+    playerNameInput.value = savedName;
+  }
+}
+
+// =========================
+// 履歴
+// =========================
+function getTodayString() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getCurrentTimeString() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+function getAllHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.history)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAllHistory(history) {
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+}
+
+function saveResultToHistory(finalPercent) {
+  const playerName = getPlayerName();
+  const today = getTodayString();
+  const time = getCurrentTimeString();
+
+  const allHistory = getAllHistory();
+
+  if (!allHistory[playerName]) {
+    allHistory[playerName] = [];
+  }
+
+  allHistory[playerName].push({
+    date: today,
+    time,
+    score: finalPercent
+  });
+
+  saveAllHistory(allHistory);
+}
+
+function getPlayerHistoryToday() {
+  const playerName = getPlayerName();
+  const today = getTodayString();
+  const allHistory = getAllHistory();
+
+  const playerHistory = allHistory[playerName] || [];
+  return playerHistory.filter(item => item.date === today);
+}
+
+function getPlayerBestScore() {
+  const playerName = getPlayerName();
+  const allHistory = getAllHistory();
+  const playerHistory = allHistory[playerName] || [];
+
+  if (playerHistory.length === 0) return null;
+
+  return Math.max(...playerHistory.map(item => item.score));
+}
+
+// =========================
+// サマリー表示
+// =========================
+function renderTodayHistory() {
+  const todayHistory = getPlayerHistoryToday();
+  todayHistoryList.innerHTML = "";
+
+  if (todayHistory.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No plays yet today.";
+    todayHistoryList.appendChild(li);
+    return;
+  }
+
+  todayHistory
+    .slice()
+    .reverse()
+    .forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.time} - ${item.score}%`;
+      todayHistoryList.appendChild(li);
+    });
+}
+
+function showSummary(finalPercent) {
+  const playerName = getPlayerName();
+  const bestScore = getPlayerBestScore();
+
+  summaryUserName.textContent = playerName;
+  summaryScore.textContent = `${finalPercent}%`;
+  summaryBestScore.textContent = bestScore !== null ? `${bestScore}%` : "-";
+
+  renderTodayHistory();
+  summaryBox.style.display = "block";
+}
+
+function hideSummary() {
+  summaryBox.style.display = "none";
+  summaryUserName.textContent = "";
+  summaryScore.textContent = "";
+  summaryBestScore.textContent = "";
+  todayHistoryList.innerHTML = "";
 }
 
 // =========================
@@ -367,25 +508,26 @@ function nextQuestion() {
 // =========================
 // 終了
 // =========================
-function gameOver() {
-  setStateImage("gameover");
-  hintEl.innerHTML = `<span class="big-title">GAME OVER</span>`;
-  resultEl.innerHTML = `
-    <span class="big-score">
-      ${Math.round((score / quizData.length) * 100)}%
-    </span>
-  `;
+function endGameScreen(titleText) {
+  const finalPercent = Math.round((score / quizData.length) * 100);
+
+  savePlayerName();
+  saveResultToHistory(finalPercent);
+
+  setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
+  hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
+  resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
   endButtons.style.display = "block";
+
+  showSummary(finalPercent);
+}
+
+function gameOver() {
+  endGameScreen("GAME OVER");
 }
 
 function finish() {
-  hintEl.innerHTML = `<span class="big-title">RESULT</span>`;
-  resultEl.innerHTML = `
-    <span class="big-score">
-      ${Math.round((score / quizData.length) * 100)}%
-    </span>
-  `;
-  endButtons.style.display = "block";
+  endGameScreen("RESULT");
 }
 
 // =========================
@@ -416,6 +558,10 @@ document.addEventListener("keydown", (e) => {
 
 restartBtn.onclick = startGame;
 
+playerNameInput.addEventListener("input", () => {
+  savePlayerName();
+});
+
 // =========================
 // 開始
 // =========================
@@ -436,9 +582,11 @@ function startGame() {
   hintEl.textContent = "";
   resultEl.textContent = "";
 
+  hideSummary();
   updateHearts();
   hideFeedback();
   loadQuestion();
 }
 
+loadPlayerName();
 startGame();
