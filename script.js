@@ -131,8 +131,24 @@ let autoNextTimer = null;
 
 let missCount = 0;
 const maxMisses = 3;
-
 const maxPlay = 2;
+
+// 6秒タイマー
+let questionTimer = null;
+let timerAnimationFrame = null;
+let questionStartTime = 0;
+const questionTimeLimit = 10000;
+
+// Playボタン演出
+let playAttentionTimer = null;
+
+// =========================
+// LocalStorage Key
+// =========================
+const STORAGE_KEYS = {
+  playerName: "audioSpelling_playerName",
+  history: "audioSpelling_history"
+};
 
 // =========================
 // 要素
@@ -145,6 +161,7 @@ const playAudioBtn = document.getElementById("playAudioBtn");
 const checkBtn = document.getElementById("checkBtn");
 
 const stateImage = document.getElementById("stateImage");
+const timerBar = document.getElementById("timerBar");
 
 const hearts = [
   document.getElementById("heart1"),
@@ -161,6 +178,14 @@ const correctCompare = document.getElementById("correctCompare");
 const endButtons = document.getElementById("endButtons");
 const reviewBtn = document.getElementById("reviewBtn");
 const restartBtn = document.getElementById("restartBtn");
+
+// 追加UI
+const playerNameInput = document.getElementById("playerNameInput");
+const summaryBox = document.getElementById("summaryBox");
+const summaryUserName = document.getElementById("summaryUserName");
+const summaryScore = document.getElementById("summaryScore");
+const summaryBestScore = document.getElementById("summaryBestScore");
+const todayHistoryList = document.getElementById("todayHistoryList");
 
 // =========================
 // 画像
@@ -183,7 +208,7 @@ const correctSound = new Audio("audio/correct.mp3");
 const incorrectSound = new Audio("audio/incorrect.mp3");
 
 // =========================
-// ヘルパー
+// 基本ヘルパー
 // =========================
 function setStateImage(state) {
   stateImage.src = imagePaths[state];
@@ -247,14 +272,9 @@ function buildCompareHtml(user, correct) {
     const safeC = escapeHtml(c);
 
     if (u === c) {
-      if (u !== "") {
-        userHtml += `<span class="char-correct">${safeU}</span>`;
-      }
-      if (c !== "") {
-        correctHtml += `<span class="char-correct">${safeC}</span>`;
-      }
+      if (u !== "") userHtml += `<span class="char-correct">${safeU}</span>`;
+      if (c !== "") correctHtml += `<span class="char-correct">${safeC}</span>`;
     } else {
-      // ユーザー側
       if (u === "") {
         userHtml += `<span class="char-missing">_</span>`;
       } else if (c === "") {
@@ -263,7 +283,6 @@ function buildCompareHtml(user, correct) {
         userHtml += `<span class="char-wrong">${safeU}</span>`;
       }
 
-      // 正解側
       if (c === "") {
         correctHtml += `<span class="char-extra">_</span>`;
       } else if (u === "") {
@@ -288,6 +307,230 @@ function showIncorrect(user, correct) {
 }
 
 // =========================
+// ユーザー名
+// =========================
+function getPlayerName() {
+  const name = playerNameInput.value.trim();
+  return name || "Guest";
+}
+
+function savePlayerName() {
+  localStorage.setItem(STORAGE_KEYS.playerName, playerNameInput.value.trim());
+}
+
+function loadPlayerName() {
+  const savedName = localStorage.getItem(STORAGE_KEYS.playerName);
+  if (savedName) {
+    playerNameInput.value = savedName;
+  }
+}
+
+// =========================
+// 履歴
+// =========================
+function getTodayString() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getCurrentTimeString() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+function getAllHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.history)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAllHistory(history) {
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+}
+
+function saveResultToHistory(finalPercent) {
+  const playerName = getPlayerName();
+  const today = getTodayString();
+  const time = getCurrentTimeString();
+  const allHistory = getAllHistory();
+
+  if (!allHistory[playerName]) {
+    allHistory[playerName] = [];
+  }
+
+  allHistory[playerName].push({
+    date: today,
+    time,
+    score: finalPercent
+  });
+
+  saveAllHistory(allHistory);
+}
+
+function getPlayerHistoryToday() {
+  const playerName = getPlayerName();
+  const today = getTodayString();
+  const allHistory = getAllHistory();
+  const playerHistory = allHistory[playerName] || [];
+
+  return playerHistory.filter(item => item.date === today);
+}
+
+function getPlayerBestScore() {
+  const playerName = getPlayerName();
+  const allHistory = getAllHistory();
+  const playerHistory = allHistory[playerName] || [];
+
+  if (playerHistory.length === 0) return null;
+  return Math.max(...playerHistory.map(item => item.score));
+}
+
+// =========================
+// サマリー表示
+// =========================
+function renderTodayHistory() {
+  const todayHistory = getPlayerHistoryToday();
+  todayHistoryList.innerHTML = "";
+
+  if (todayHistory.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No plays yet today.";
+    todayHistoryList.appendChild(li);
+    return;
+  }
+
+  todayHistory
+    .slice()
+    .reverse()
+    .forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.time} - ${item.score}%`;
+      todayHistoryList.appendChild(li);
+    });
+}
+
+function showSummary(finalPercent) {
+  const playerName = getPlayerName();
+  const bestScore = getPlayerBestScore();
+
+  summaryUserName.textContent = playerName;
+  summaryScore.textContent = `${finalPercent}%`;
+  summaryBestScore.textContent = bestScore !== null ? `${bestScore}%` : "-";
+
+  renderTodayHistory();
+  summaryBox.style.display = "block";
+}
+
+function hideSummary() {
+  summaryBox.style.display = "none";
+  summaryUserName.textContent = "";
+  summaryScore.textContent = "";
+  summaryBestScore.textContent = "";
+  todayHistoryList.innerHTML = "";
+}
+
+// =========================
+// タイマー
+// =========================
+function stopQuestionTimer() {
+  if (questionTimer) {
+    clearTimeout(questionTimer);
+    questionTimer = null;
+  }
+
+  if (timerAnimationFrame) {
+    cancelAnimationFrame(timerAnimationFrame);
+    timerAnimationFrame = null;
+  }
+}
+
+function resetTimerBar() {
+  if (!timerBar) return;
+  timerBar.style.width = "100%";
+}
+
+function animateTimerBar() {
+  if (!timerBar) return;
+
+  const elapsed = Date.now() - questionStartTime;
+  const remaining = Math.max(0, questionTimeLimit - elapsed);
+  const percent = (remaining / questionTimeLimit) * 100;
+
+  timerBar.style.width = `${percent}%`;
+
+  if (remaining > 0) {
+    timerAnimationFrame = requestAnimationFrame(animateTimerBar);
+  }
+}
+
+function handleTimeUp() {
+  if (isAnswered) return;
+
+  isAnswered = true;
+  stopQuestionTimer();
+
+  missCount++;
+  resultEl.textContent = "Time up!";
+  setStateImage("incorrect");
+  playEffect(incorrectSound);
+  updateHearts();
+
+  const correct = quizData[currentIndex].word.toLowerCase();
+  showIncorrect("", correct);
+
+  if (missCount >= maxMisses) {
+    autoNextTimer = setTimeout(gameOver, 1500);
+    return;
+  }
+
+  autoNextTimer = setTimeout(nextQuestion, 5000);
+}
+
+function startQuestionTimer() {
+    // ⭐ すでに動いてたら無視
+  if (questionTimer) return;
+  
+  stopQuestionTimer();
+  resetTimerBar();
+
+  questionStartTime = Date.now();
+  animateTimerBar();
+
+  questionTimer = setTimeout(() => {
+    handleTimeUp();
+  }, questionTimeLimit);
+}
+
+// =========================
+// Playボタン演出
+// =========================
+function stopPlayAttention() {
+  playAudioBtn.classList.remove("attention");
+
+  if (playAttentionTimer) {
+    clearTimeout(playAttentionTimer);
+    playAttentionTimer = null;
+  }
+}
+
+function startPlayAttention() {
+  stopPlayAttention();
+  playAudioBtn.classList.add("attention");
+
+  playAttentionTimer = setTimeout(() => {
+    playAudioBtn.classList.remove("attention");
+    playAttentionTimer = null;
+  }, 5000);
+}
+
+// =========================
 // 問題
 // =========================
 function loadQuestion() {
@@ -295,6 +538,8 @@ function loadQuestion() {
     clearTimeout(autoNextTimer);
     autoNextTimer = null;
   }
+
+  stopQuestionTimer();
 
   answerInput.value = "";
   resultEl.textContent = "";
@@ -305,15 +550,20 @@ function loadQuestion() {
   setStateImage("idle");
   updateHearts();
   hideFeedback();
+  resetTimerBar();
 
   answerInput.focus();
-}
 
+  // ❌ ここはもう呼ばない
+  // startQuestionTimer();
+}
 // =========================
 // 判定
 // =========================
 function checkAnswer() {
   if (isAnswered) return;
+
+  stopQuestionTimer();
 
   const user = answerInput.value.trim().toLowerCase();
   const correct = quizData[currentIndex].word.toLowerCase();
@@ -354,6 +604,8 @@ function nextQuestion() {
     autoNextTimer = null;
   }
 
+  stopQuestionTimer();
+
   currentIndex++;
 
   if (currentIndex >= quizData.length) {
@@ -367,25 +619,29 @@ function nextQuestion() {
 // =========================
 // 終了
 // =========================
-function gameOver() {
-  setStateImage("gameover");
-  hintEl.innerHTML = `<span class="big-title">GAME OVER</span>`;
-  resultEl.innerHTML = `
-    <span class="big-score">
-      ${Math.round((score / quizData.length) * 100)}%
-    </span>
-  `;
+function endGameScreen(titleText) {
+  stopQuestionTimer();
+  stopPlayAttention();
+
+  const finalPercent = Math.round((score / quizData.length) * 100);
+
+  savePlayerName();
+  saveResultToHistory(finalPercent);
+
+  setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
+  hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
+  resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
   endButtons.style.display = "block";
+
+  showSummary(finalPercent);
+}
+
+function gameOver() {
+  endGameScreen("GAME OVER");
 }
 
 function finish() {
-  hintEl.innerHTML = `<span class="big-title">RESULT</span>`;
-  resultEl.innerHTML = `
-    <span class="big-score">
-      ${Math.round((score / quizData.length) * 100)}%
-    </span>
-  `;
-  endButtons.style.display = "block";
+  endGameScreen("RESULT");
 }
 
 // =========================
@@ -393,7 +649,11 @@ function finish() {
 // =========================
 playAudioBtn.onclick = () => {
   if (!quizData.length) return;
+
+  stopPlayAttention();
   playWord(quizData[currentIndex].word);
+    // ⭐ 追加：ここでタイマー開始
+  startQuestionTimer();
 };
 
 checkBtn.onclick = (e) => {
@@ -403,18 +663,46 @@ checkBtn.onclick = (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
+    if (document.activeElement !== answerInput) return;
+
     e.preventDefault();
     checkAnswer();
   }
 
   if (e.code === "Space") {
+    if (document.activeElement === playerNameInput) return;
+
     e.preventDefault();
     if (!quizData.length) return;
+
+    stopPlayAttention();
     playWord(quizData[currentIndex].word);
+      // ⭐ 追加
+    startQuestionTimer();
   }
 });
 
 restartBtn.onclick = startGame;
+
+playerNameInput.addEventListener("input", () => {
+  savePlayerName();
+});
+
+playerNameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    e.stopPropagation();
+    answerInput.focus();
+  }
+});
+
+answerInput.addEventListener("input", () => {
+  if (answerInput.value.trim() !== "") {
+    setStateImage("typing");
+  } else {
+    setStateImage("idle");
+  }
+});
 
 // =========================
 // 開始
@@ -432,13 +720,20 @@ function startGame() {
     autoNextTimer = null;
   }
 
+  stopQuestionTimer();
+  stopPlayAttention();
+  resetTimerBar();
+
   endButtons.style.display = "none";
   hintEl.textContent = "";
   resultEl.textContent = "";
 
+  hideSummary();
   updateHearts();
   hideFeedback();
   loadQuestion();
+  startPlayAttention();
 }
 
+loadPlayerName();
 startGame();

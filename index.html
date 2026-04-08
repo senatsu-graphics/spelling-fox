@@ -10,22 +10,39 @@
   <div class="quiz-container">
     <h1>Audio Spelling Quiz</h1>
 
-    <!-- ❤️ ハート -->
+    <!-- User Name -->
+    <div class="player-box">
+      <label for="playerNameInput" class="player-label">User Name</label>
+      <input
+        id="playerNameInput"
+        type="text"
+        placeholder="Enter your name"
+        maxlength="20"
+        autocomplete="off"
+      >
+    </div>
+
+    <!-- Hearts -->
     <div id="hearts" class="hearts">
       <img id="heart1" src="images/Heart-black.png" alt="heart">
       <img id="heart2" src="images/Heart-black.png" alt="heart">
       <img id="heart3" src="images/Heart-black.png" alt="heart">
     </div>
 
-    <!-- キャラクター画像 -->
+    <!-- Timer Bar -->
+    <div class="timer-bar-wrap">
+      <div id="timerBar" class="timer-bar"></div>
+    </div>
+
+    <!-- Character -->
     <img id="stateImage" src="images/idle.png" alt="Quiz character">
 
-    <!-- ヒント -->
+    <!-- Hint -->
     <p id="hint"></p>
 
-    <!-- 入力フォーム -->
+    <!-- Quiz Form -->
     <form id="quizForm">
-      <!-- 不正解フィードバック -->
+      <!-- Incorrect Feedback -->
       <div id="feedbackBox" class="feedback-box" style="display: none;">
         <p class="feedback-label">Correct answer</p>
         <p id="correctAnswerText" class="correct-answer-text"></p>
@@ -42,7 +59,7 @@
         </div>
       </div>
 
-      <!-- 入力欄 -->
+      <!-- Answer Input -->
       <input
         id="answerInput"
         type="text"
@@ -50,33 +67,44 @@
         autocomplete="off"
       >
 
-      <!-- ボタン -->
+      <!-- Buttons -->
       <div class="button-row">
         <button id="playAudioBtn" type="button">🔊 Play</button>
         <button id="checkBtn" type="submit">Enter</button>
       </div>
     </form>
 
-    <!-- 結果 -->
+    <!-- Result -->
     <p id="result"></p>
     <p id="playCountText"></p>
 
-    <!-- 終了時 -->
+    <!-- Summary -->
+    <div id="summaryBox" class="summary-box" style="display: none;">
+      <p><strong>User:</strong> <span id="summaryUserName"></span></p>
+      <p><strong>Score:</strong> <span id="summaryScore"></span></p>
+      <p><strong>Best Score:</strong> <span id="summaryBestScore"></span></p>
+
+      <div class="history-box">
+        <p><strong>Today's Results</strong></p>
+        <ol id="todayHistoryList"></ol>
+      </div>
+    </div>
+
+    <!-- End Buttons -->
     <div id="endButtons" style="display: none;">
       <button id="reviewBtn" type="button">Review Mistakes</button>
       <button id="restartBtn" type="button">Restart All</button>
     </div>
 
-    <!-- 🎯 ショートカット -->
+    <!-- Shortcut -->
     <p class="shortcut-hint">
-       Shortcut Keys : [Space] Play / [Enter] Enter
+      Keyboard Shortcuts: Space = Play / Enter = Check
     </p>
 
-    <!-- 🎯 コピーライト -->
+    <!-- Copyright -->
     <p class="copyright">
       © Senatsu-Graphics
     </p>
-
   </div>
 
   <script src="script.js"></script>
