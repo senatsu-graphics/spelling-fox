@@ -196,6 +196,19 @@ const todayHistoryList = document.getElementById("todayHistoryList");
 const shareBtn = document.getElementById("shareBtn");
 
 // =========================
+// Shareボタン演出
+// =========================
+function startShareAttention() {
+  if (!shareBtn) return;
+  shareBtn.classList.add("share-attention");
+}
+
+function stopShareAttention() {
+  if (!shareBtn) return;
+  shareBtn.classList.remove("share-attention");
+}
+
+// =========================
 // 画像
 // =========================
 const imagePaths = {
@@ -709,11 +722,13 @@ function endGameScreen(titleText) {
     showSummary(finalPercent);
   }
 
-  if (titleText === "GAME OVER" && !reviewMode) {
-    showShareButton();
-  } else {
-    hideShareButton();
-  }
+if (titleText === "GAME OVER" && !reviewMode) {
+  showShareButton();
+  startShareAttention(); // ←追加
+} else {
+  hideShareButton();
+  stopShareAttention(); // ←追加
+}
 }
 
 function gameOver() {
@@ -755,6 +770,7 @@ function startReviewMode() {
   resultEl.textContent = "";
 
   hideShareButton();
+  stopShareAttention(); // ←追加
   hideSummary();
   updateHearts();
   hideFeedback();
@@ -857,6 +873,7 @@ function startGame() {
   resultEl.textContent = "";
 
   hideShareButton();
+  stopShareAttention(); // ←追加
   hideSummary();
   updateHearts();
   hideFeedback();
