@@ -116,9 +116,9 @@ experience
 // =========================
 const originalQuizData = wordString
   .split(/\n+/)
-  .map(w => w.trim())
-  .filter(w => w !== "")
-  .map(w => ({ word: w }));
+  .map((w) => w.trim())
+  .filter((w) => w !== "")
+  .map((w) => ({ word: w }));
 
 // =========================
 // 状態
@@ -129,12 +129,17 @@ let score = 0;
 let playCount = 0;
 let isAnswered = false;
 let autoNextTimer = null;
+let shareTimer = null;
 
 let missCount = 0;
 const maxMisses = 3;
 const maxPlay = 2;
 
-// 6秒タイマー
+// review用
+let missedWords = [];
+let reviewMode = false;
+
+// 10秒タイマー
 let questionTimer = null;
 let timerAnimationFrame = null;
 let questionStartTime = 0;
@@ -187,6 +192,22 @@ const summaryUserName = document.getElementById("summaryUserName");
 const summaryScore = document.getElementById("summaryScore");
 const summaryBestScore = document.getElementById("summaryBestScore");
 const todayHistoryList = document.getElementById("todayHistoryList");
+
+// SNSシェアボタン
+const shareBtn = document.getElementById("shareBtn");
+
+// =========================
+// Shareボタン演出
+// =========================
+function startShareAttention() {
+  if (!shareBtn) return;
+  shareBtn.classList.add("share-attention");
+}
+
+function stopShareAttention() {
+  if (!shareBtn) return;
+  shareBtn.classList.remove("share-attention");
+}
 
 // =========================
 // 画像
@@ -307,6 +328,29 @@ function showIncorrect(user, correct) {
   correctCompare.innerHTML = compared.correctHtml;
 }
 
+function addMissedWord(word) {
+  if (!missedWords.includes(word)) {
+    missedWords.push(word);
+  }
+}
+
+function getCurrentWord() {
+  return quizData[currentIndex].word.toLowerCase();
+}
+
+// =========================
+// シェアボタン表示制御
+// =========================
+function showShareButton() {
+  if (!shareBtn) return;
+  shareBtn.style.display = "inline-block";
+}
+
+function hideShareButton() {
+  if (!shareBtn) return;
+  shareBtn.style.display = "none";
+}
+
 // =========================
 // ユーザー名
 // =========================
@@ -381,7 +425,7 @@ function getPlayerHistoryToday() {
   const allHistory = getAllHistory();
   const playerHistory = allHistory[playerName] || [];
 
-  return playerHistory.filter(item => item.date === today);
+  return playerHistory.filter((item) => item.date === today);
 }
 
 function getPlayerBestScore() {
@@ -390,7 +434,7 @@ function getPlayerBestScore() {
   const playerHistory = allHistory[playerName] || [];
 
   if (playerHistory.length === 0) return null;
-  return Math.max(...playerHistory.map(item => item.score));
+  return Math.max(...playerHistory.map((item) => item.score));
 }
 
 // =========================
@@ -410,7 +454,7 @@ function renderTodayHistory() {
   todayHistory
     .slice()
     .reverse()
-    .forEach(item => {
+    .forEach((item) => {
       const li = document.createElement("li");
       li.textContent = `${item.time} - ${item.score}%`;
       todayHistoryList.appendChild(li);
@@ -483,7 +527,8 @@ function handleTimeUp() {
   playEffect(incorrectSound);
   updateHearts();
 
-  const correct = quizData[currentIndex].word.toLowerCase();
+  const correct = getCurrentWord();
+  addMissedWord(correct);
   showIncorrect("", correct);
 
   if (missCount >= maxMisses) {
@@ -495,9 +540,8 @@ function handleTimeUp() {
 }
 
 function startQuestionTimer() {
-    // ⭐ すでに動いてたら無視
   if (questionTimer) return;
-  
+
   stopQuestionTimer();
   resetTimerBar();
 
@@ -532,6 +576,33 @@ function startPlayAttention() {
 }
 
 // =========================
+// SNSシェアボタン
+// =========================
+if (shareBtn) {
+  shareBtn.onclick = () => {
+    if (reviewMode) return;
+
+    const playerName = getPlayerName();
+    const finalPercent = Math.round((score / quizData.length) * 100);
+
+    const text =
+      `${playerName} scored ${finalPercent}% in Spelling Fox!\n` +
+      `🦊Can you beat this score?\n`;
+
+    const url = "https://spelling-fox.vercel.app/";
+
+    const shareUrl =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text) +
+      "&url=" +
+      encodeURIComponent(url) +
+      "&hashtags=spellingfox";
+
+    window.open(shareUrl, "_blank");
+  };
+}
+
+// =========================
 // 問題
 // =========================
 function loadQuestion() {
@@ -540,11 +611,17 @@ function loadQuestion() {
     autoNextTimer = null;
   }
 
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
   stopQuestionTimer();
+  stopShareAttention();
 
   answerInput.value = "";
   resultEl.textContent = "";
-  hintEl.textContent = "";
+  hintEl.textContent = reviewMode ? "Review Mistakes" : "";
   isAnswered = false;
   playCount = 0;
 
@@ -553,11 +630,11 @@ function loadQuestion() {
   hideFeedback();
   resetTimerBar();
 
-  answerInput.focus();
+  hideShareButton();
 
-  // ❌ ここはもう呼ばない
-  // startQuestionTimer();
+  answerInput.focus();
 }
+
 // =========================
 // 判定
 // =========================
@@ -567,7 +644,7 @@ function checkAnswer() {
   stopQuestionTimer();
 
   const user = answerInput.value.trim().toLowerCase();
-  const correct = quizData[currentIndex].word.toLowerCase();
+  const correct = getCurrentWord();
 
   let isCorrect = false;
   isAnswered = true;
@@ -584,6 +661,7 @@ function checkAnswer() {
     setStateImage("incorrect");
     playEffect(incorrectSound);
     updateHearts();
+    addMissedWord(correct);
     showIncorrect(user, correct);
   }
 
@@ -620,21 +698,58 @@ function nextQuestion() {
 // =========================
 // 終了
 // =========================
+function updateReviewButtonVisibility() {
+  if (reviewMode) {
+    reviewBtn.style.display = "none";
+    return;
+  }
+
+  reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
+}
+
 function endGameScreen(titleText) {
   stopQuestionTimer();
   stopPlayAttention();
 
   const finalPercent = Math.round((score / quizData.length) * 100);
 
-  savePlayerName();
-  saveResultToHistory(finalPercent);
+  if (!reviewMode) {
+    savePlayerName();
+    saveResultToHistory(finalPercent);
+  }
 
   setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
   hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
   resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
   endButtons.style.display = "block";
 
-  showSummary(finalPercent);
+  updateReviewButtonVisibility();
+
+  if (reviewMode) {
+    hideSummary();
+  } else {
+    showSummary(finalPercent);
+  }
+
+  if (titleText === "GAME OVER" && !reviewMode) {
+    showShareButton();
+
+    if (shareTimer) {
+      clearTimeout(shareTimer);
+    }
+
+    shareTimer = setTimeout(() => {
+      startShareAttention();
+    }, 2700);
+  } else {
+    hideShareButton();
+    stopShareAttention();
+
+    if (shareTimer) {
+      clearTimeout(shareTimer);
+      shareTimer = null;
+    }
+  }
 }
 
 function gameOver() {
@@ -642,25 +757,72 @@ function gameOver() {
 }
 
 function finish() {
-  endGameScreen("RESULT");
+  endGameScreen(reviewMode ? "REVIEW COMPLETE" : "RESULT");
+}
+
+// =========================
+// Review Mistakes
+// =========================
+function startReviewMode() {
+  if (missedWords.length === 0) {
+    alert("You have no mistakes to review.");
+    return;
+  }
+
+  reviewMode = true;
+  quizData = shuffle(missedWords.map((word) => ({ word })));
+  currentIndex = 0;
+  score = 0;
+  missCount = 0;
+  playCount = 0;
+  isAnswered = false;
+
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
+  stopQuestionTimer();
+  stopPlayAttention();
+  stopShareAttention();
+  resetTimerBar();
+
+  endButtons.style.display = "none";
+  hintEl.textContent = "Review Mistakes";
+  resultEl.textContent = "";
+
+  hideShareButton();
+  hideSummary();
+  updateHearts();
+  hideFeedback();
+  loadQuestion();
+  startPlayAttention();
 }
 
 // =========================
 // イベント
 // =========================
-playAudioBtn.onclick = () => {
-  if (!quizData.length) return;
+if (playAudioBtn) {
+  playAudioBtn.onclick = () => {
+    if (!quizData.length) return;
 
-  stopPlayAttention();
-  playWord(quizData[currentIndex].word);
-    // ⭐ 追加：ここでタイマー開始
-  startQuestionTimer();
-};
+    stopPlayAttention();
+    playWord(quizData[currentIndex].word);
+    startQuestionTimer();
+  };
+}
 
-checkBtn.onclick = (e) => {
-  e.preventDefault();
-  checkAnswer();
-};
+if (checkBtn) {
+  checkBtn.onclick = (e) => {
+    e.preventDefault();
+    checkAnswer();
+  };
+}
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
@@ -678,37 +840,57 @@ document.addEventListener("keydown", (e) => {
 
     stopPlayAttention();
     playWord(quizData[currentIndex].word);
-      // ⭐ 追加
     startQuestionTimer();
   }
 });
 
-restartBtn.onclick = startGame;
+if (restartBtn) {
+  restartBtn.onclick = startGame;
+}
 
-playerNameInput.addEventListener("input", () => {
-  savePlayerName();
-});
+if (reviewBtn) {
+  reviewBtn.onclick = startReviewMode;
+}
 
-playerNameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    e.stopPropagation();
-    answerInput.focus();
-  }
-});
+if (playerNameInput) {
+  playerNameInput.addEventListener("input", () => {
+    savePlayerName();
+  });
 
-answerInput.addEventListener("input", () => {
-  if (answerInput.value.trim() !== "") {
-    setStateImage("typing");
-  } else {
-    setStateImage("idle");
-  }
-});
+  playerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      answerInput.focus();
+    }
+  });
+}
+
+if (answerInput) {
+  answerInput.addEventListener("input", () => {
+    if (answerInput.value.trim() !== "") {
+      setStateImage("typing");
+    } else {
+      setStateImage("idle");
+    }
+  });
+}
+
+// =========================
+// クレジット年取得
+// =========================
+const currentYearEl = document.getElementById("currentYear");
+
+if (currentYearEl) {
+  currentYearEl.textContent = new Date().getFullYear();
+}
 
 // =========================
 // 開始
 // =========================
 function startGame() {
+  reviewMode = false;
+  missedWords = [];
   quizData = shuffle(originalQuizData);
   currentIndex = 0;
   score = 0;
@@ -721,14 +903,21 @@ function startGame() {
     autoNextTimer = null;
   }
 
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
   stopQuestionTimer();
   stopPlayAttention();
+  stopShareAttention();
   resetTimerBar();
 
   endButtons.style.display = "none";
   hintEl.textContent = "";
   resultEl.textContent = "";
 
+  hideShareButton();
   hideSummary();
   updateHearts();
   hideFeedback();
@@ -737,4 +926,5 @@ function startGame() {
 }
 
 loadPlayerName();
+hideShareButton();
 startGame();
