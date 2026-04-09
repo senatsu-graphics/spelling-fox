@@ -770,6 +770,14 @@ answerInput.addEventListener("input", () => {
     setStateImage("idle");
   }
 });
+// =========================
+// クレジット年取得
+// =========================
+const currentYearEl = document.getElementById("currentYear");
+
+if (currentYearEl) {
+  currentYearEl.textContent = new Date().getFullYear();
+}
 
 // =========================
 // 開始
