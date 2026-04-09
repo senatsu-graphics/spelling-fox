@@ -129,6 +129,7 @@ let score = 0;
 let playCount = 0;
 let isAnswered = false;
 let autoNextTimer = null;
+let shareTimer = null;
 
 let missCount = 0;
 const maxMisses = 3;
@@ -577,27 +578,29 @@ function startPlayAttention() {
 // =========================
 // SNSシェアボタン
 // =========================
-shareBtn.onclick = () => {
-  if (reviewMode) return;
+if (shareBtn) {
+  shareBtn.onclick = () => {
+    if (reviewMode) return;
 
-  const playerName = getPlayerName();
-  const finalPercent = Math.round((score / quizData.length) * 100);
+    const playerName = getPlayerName();
+    const finalPercent = Math.round((score / quizData.length) * 100);
 
-  const text =
-    `${playerName} scored ${finalPercent}% in Spelling Fox!\n` +
-    `🦊Can you beat this score?\n`;
+    const text =
+      `${playerName} scored ${finalPercent}% in Spelling Fox!\n` +
+      `🦊Can you beat this score?\n`;
 
-  const url = "https://spelling-fox.vercel.app/";
+    const url = "https://spelling-fox.vercel.app/";
 
-  const shareUrl =
-    "https://twitter.com/intent/tweet?text=" +
-    encodeURIComponent(text) +
-    "&url=" +
-    encodeURIComponent(url) +
-    "&hashtags=spellingfox";
+    const shareUrl =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text) +
+      "&url=" +
+      encodeURIComponent(url) +
+      "&hashtags=spellingfox";
 
-  window.open(shareUrl, "_blank");
-};
+    window.open(shareUrl, "_blank");
+  };
+}
 
 // =========================
 // 問題
@@ -608,7 +611,13 @@ function loadQuestion() {
     autoNextTimer = null;
   }
 
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
   stopQuestionTimer();
+  stopShareAttention();
 
   answerInput.value = "";
   resultEl.textContent = "";
@@ -722,22 +731,24 @@ function endGameScreen(titleText) {
     showSummary(finalPercent);
   }
 
-if (titleText === "GAME OVER" && !reviewMode) {
-  showShareButton();
+  if (titleText === "GAME OVER" && !reviewMode) {
+    showShareButton();
 
-  if (shareTimer) clearTimeout(shareTimer);
+    if (shareTimer) {
+      clearTimeout(shareTimer);
+    }
 
-  shareTimer = setTimeout(() => {
-    startShareAttention();
-  }, 1700);
+    shareTimer = setTimeout(() => {
+      startShareAttention();
+    }, 1700);
+  } else {
+    hideShareButton();
+    stopShareAttention();
 
-} else {
-  hideShareButton();
-  stopShareAttention();
-
-  if (shareTimer) {
-    clearTimeout(shareTimer);
-    shareTimer = null;
+    if (shareTimer) {
+      clearTimeout(shareTimer);
+      shareTimer = null;
+    }
   }
 }
 
@@ -771,8 +782,14 @@ function startReviewMode() {
     autoNextTimer = null;
   }
 
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
   stopQuestionTimer();
   stopPlayAttention();
+  stopShareAttention();
   resetTimerBar();
 
   endButtons.style.display = "none";
@@ -780,7 +797,6 @@ function startReviewMode() {
   resultEl.textContent = "";
 
   hideShareButton();
-  stopShareAttention(); // ←追加
   hideSummary();
   updateHearts();
   hideFeedback();
@@ -791,18 +807,22 @@ function startReviewMode() {
 // =========================
 // イベント
 // =========================
-playAudioBtn.onclick = () => {
-  if (!quizData.length) return;
+if (playAudioBtn) {
+  playAudioBtn.onclick = () => {
+    if (!quizData.length) return;
 
-  stopPlayAttention();
-  playWord(quizData[currentIndex].word);
-  startQuestionTimer();
-};
+    stopPlayAttention();
+    playWord(quizData[currentIndex].word);
+    startQuestionTimer();
+  };
+}
 
-checkBtn.onclick = (e) => {
-  e.preventDefault();
-  checkAnswer();
-};
+if (checkBtn) {
+  checkBtn.onclick = (e) => {
+    e.preventDefault();
+    checkAnswer();
+  };
+}
 
 document.addEventListener("keydown", (e) => {
   if (e.code === "Enter") {
@@ -824,28 +844,37 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-restartBtn.onclick = startGame;
-reviewBtn.onclick = startReviewMode;
+if (restartBtn) {
+  restartBtn.onclick = startGame;
+}
 
-playerNameInput.addEventListener("input", () => {
-  savePlayerName();
-});
+if (reviewBtn) {
+  reviewBtn.onclick = startReviewMode;
+}
 
-playerNameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    e.stopPropagation();
-    answerInput.focus();
-  }
-});
+if (playerNameInput) {
+  playerNameInput.addEventListener("input", () => {
+    savePlayerName();
+  });
 
-answerInput.addEventListener("input", () => {
-  if (answerInput.value.trim() !== "") {
-    setStateImage("typing");
-  } else {
-    setStateImage("idle");
-  }
-});
+  playerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      answerInput.focus();
+    }
+  });
+}
+
+if (answerInput) {
+  answerInput.addEventListener("input", () => {
+    if (answerInput.value.trim() !== "") {
+      setStateImage("typing");
+    } else {
+      setStateImage("idle");
+    }
+  });
+}
 
 // =========================
 // クレジット年取得
@@ -874,8 +903,14 @@ function startGame() {
     autoNextTimer = null;
   }
 
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
+
   stopQuestionTimer();
   stopPlayAttention();
+  stopShareAttention();
   resetTimerBar();
 
   endButtons.style.display = "none";
@@ -883,7 +918,6 @@ function startGame() {
   resultEl.textContent = "";
 
   hideShareButton();
-  stopShareAttention(); // ←追加
   hideSummary();
   updateHearts();
   hideFeedback();
