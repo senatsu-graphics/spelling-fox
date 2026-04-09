@@ -192,6 +192,9 @@ const summaryScore = document.getElementById("summaryScore");
 const summaryBestScore = document.getElementById("summaryBestScore");
 const todayHistoryList = document.getElementById("todayHistoryList");
 
+//SNSシェアボタン
+const shareBtn = document.getElementById("shareBtn");
+
 // =========================
 // 画像
 // =========================
@@ -544,6 +547,30 @@ function startPlayAttention() {
     playAttentionTimer = null;
   }, 5000);
 }
+
+// =========================
+// SNSシェアボタン
+// =========================
+shareBtn.onclick = () => {
+  if (reviewMode) return;
+  const playerName = getPlayerName();
+  const finalPercent = Math.round((score / quizData.length) * 100);
+
+  const text =
+    `${playerName} scored ${finalPercent}% in Spelling Fox!\n` +
+    `🦊Can you beat this score?\n`;
+
+  const url = "https://spelling-fox.vercel.app/"; // URL
+
+  const shareUrl =
+    "https://twitter.com/intent/tweet?text=" +
+    encodeURIComponent(text) +
+    "&url=" +
+    encodeURIComponent(url) +
+    "&hashtags=spellingfox";
+
+  window.open(shareUrl, "_blank");
+};
 
 // =========================
 // 問題
