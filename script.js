@@ -71,6 +71,7 @@ vehicle
 leisure
 weird
 foreign
+receive
 neighbor
 beige
 caffeine
@@ -115,9 +116,9 @@ experience
 // =========================
 const originalQuizData = wordString
   .split(/\n+/)
-  .map(w => w.trim())
-  .filter(w => w !== "")
-  .map(w => ({ word: w }));
+  .map((w) => w.trim())
+  .filter((w) => w !== "")
+  .map((w) => ({ word: w }));
 
 // =========================
 // 状態
@@ -133,7 +134,11 @@ let missCount = 0;
 const maxMisses = 3;
 const maxPlay = 2;
 
-// 6秒タイマー
+// review用
+let missedWords = [];
+let reviewMode = false;
+
+// 10秒タイマー
 let questionTimer = null;
 let timerAnimationFrame = null;
 let questionStartTime = 0;
@@ -306,6 +311,16 @@ function showIncorrect(user, correct) {
   correctCompare.innerHTML = compared.correctHtml;
 }
 
+function addMissedWord(word) {
+  if (!missedWords.includes(word)) {
+    missedWords.push(word);
+  }
+}
+
+function getCurrentWord() {
+  return quizData[currentIndex].word.toLowerCase();
+}
+
 // =========================
 // ユーザー名
 // =========================
@@ -380,7 +395,7 @@ function getPlayerHistoryToday() {
   const allHistory = getAllHistory();
   const playerHistory = allHistory[playerName] || [];
 
-  return playerHistory.filter(item => item.date === today);
+  return playerHistory.filter((item) => item.date === today);
 }
 
 function getPlayerBestScore() {
@@ -389,7 +404,7 @@ function getPlayerBestScore() {
   const playerHistory = allHistory[playerName] || [];
 
   if (playerHistory.length === 0) return null;
-  return Math.max(...playerHistory.map(item => item.score));
+  return Math.max(...playerHistory.map((item) => item.score));
 }
 
 // =========================
@@ -409,7 +424,7 @@ function renderTodayHistory() {
   todayHistory
     .slice()
     .reverse()
-    .forEach(item => {
+    .forEach((item) => {
       const li = document.createElement("li");
       li.textContent = `${item.time} - ${item.score}%`;
       todayHistoryList.appendChild(li);
@@ -482,7 +497,8 @@ function handleTimeUp() {
   playEffect(incorrectSound);
   updateHearts();
 
-  const correct = quizData[currentIndex].word.toLowerCase();
+  const correct = getCurrentWord();
+  addMissedWord(correct);
   showIncorrect("", correct);
 
   if (missCount >= maxMisses) {
@@ -494,9 +510,8 @@ function handleTimeUp() {
 }
 
 function startQuestionTimer() {
-    // ⭐ すでに動いてたら無視
   if (questionTimer) return;
-  
+
   stopQuestionTimer();
   resetTimerBar();
 
@@ -543,7 +558,7 @@ function loadQuestion() {
 
   answerInput.value = "";
   resultEl.textContent = "";
-  hintEl.textContent = "";
+  hintEl.textContent = reviewMode ? "Review Mistakes" : "";
   isAnswered = false;
   playCount = 0;
 
@@ -553,10 +568,8 @@ function loadQuestion() {
   resetTimerBar();
 
   answerInput.focus();
-
-  // ❌ ここはもう呼ばない
-  // startQuestionTimer();
 }
+
 // =========================
 // 判定
 // =========================
@@ -566,7 +579,7 @@ function checkAnswer() {
   stopQuestionTimer();
 
   const user = answerInput.value.trim().toLowerCase();
-  const correct = quizData[currentIndex].word.toLowerCase();
+  const correct = getCurrentWord();
 
   let isCorrect = false;
   isAnswered = true;
@@ -583,6 +596,7 @@ function checkAnswer() {
     setStateImage("incorrect");
     playEffect(incorrectSound);
     updateHearts();
+    addMissedWord(correct);
     showIncorrect(user, correct);
   }
 
@@ -619,21 +633,38 @@ function nextQuestion() {
 // =========================
 // 終了
 // =========================
+function updateReviewButtonVisibility() {
+  if (reviewMode) {
+    reviewBtn.style.display = "none";
+    return;
+  }
+
+  reviewBtn.style.display = missedWords.length > 0 ? "inline-block" : "none";
+}
+
 function endGameScreen(titleText) {
   stopQuestionTimer();
   stopPlayAttention();
 
   const finalPercent = Math.round((score / quizData.length) * 100);
 
-  savePlayerName();
-  saveResultToHistory(finalPercent);
+  if (!reviewMode) {
+    savePlayerName();
+    saveResultToHistory(finalPercent);
+  }
 
   setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
   hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
   resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
   endButtons.style.display = "block";
 
-  showSummary(finalPercent);
+  updateReviewButtonVisibility();
+
+  if (reviewMode) {
+    hideSummary();
+  } else {
+    showSummary(finalPercent);
+  }
 }
 
 function gameOver() {
@@ -641,7 +672,44 @@ function gameOver() {
 }
 
 function finish() {
-  endGameScreen("RESULT");
+  endGameScreen(reviewMode ? "REVIEW COMPLETE" : "RESULT");
+}
+
+// =========================
+// Review Mistakes
+// =========================
+function startReviewMode() {
+  if (missedWords.length === 0) {
+    alert("You have no mistakes to review.");
+    return;
+  }
+
+  reviewMode = true;
+  quizData = shuffle(missedWords.map((word) => ({ word })));
+  currentIndex = 0;
+  score = 0;
+  missCount = 0;
+  playCount = 0;
+  isAnswered = false;
+
+  if (autoNextTimer) {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
+  }
+
+  stopQuestionTimer();
+  stopPlayAttention();
+  resetTimerBar();
+
+  endButtons.style.display = "none";
+  hintEl.textContent = "Review Mistakes";
+  resultEl.textContent = "";
+
+  hideSummary();
+  updateHearts();
+  hideFeedback();
+  loadQuestion();
+  startPlayAttention();
 }
 
 // =========================
@@ -652,7 +720,6 @@ playAudioBtn.onclick = () => {
 
   stopPlayAttention();
   playWord(quizData[currentIndex].word);
-    // ⭐ 追加：ここでタイマー開始
   startQuestionTimer();
 };
 
@@ -677,12 +744,12 @@ document.addEventListener("keydown", (e) => {
 
     stopPlayAttention();
     playWord(quizData[currentIndex].word);
-      // ⭐ 追加
     startQuestionTimer();
   }
 });
 
 restartBtn.onclick = startGame;
+reviewBtn.onclick = startReviewMode;
 
 playerNameInput.addEventListener("input", () => {
   savePlayerName();
@@ -708,6 +775,8 @@ answerInput.addEventListener("input", () => {
 // 開始
 // =========================
 function startGame() {
+  reviewMode = false;
+  missedWords = [];
   quizData = shuffle(originalQuizData);
   currentIndex = 0;
   score = 0;
