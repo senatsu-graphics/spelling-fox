@@ -192,7 +192,7 @@ const summaryScore = document.getElementById("summaryScore");
 const summaryBestScore = document.getElementById("summaryBestScore");
 const todayHistoryList = document.getElementById("todayHistoryList");
 
-//SNSシェアボタン
+// SNSシェアボタン
 const shareBtn = document.getElementById("shareBtn");
 
 // =========================
@@ -322,6 +322,19 @@ function addMissedWord(word) {
 
 function getCurrentWord() {
   return quizData[currentIndex].word.toLowerCase();
+}
+
+// =========================
+// シェアボタン表示制御
+// =========================
+function showShareButton() {
+  if (!shareBtn) return;
+  shareBtn.style.display = "inline-block";
+}
+
+function hideShareButton() {
+  if (!shareBtn) return;
+  shareBtn.style.display = "none";
 }
 
 // =========================
@@ -553,6 +566,7 @@ function startPlayAttention() {
 // =========================
 shareBtn.onclick = () => {
   if (reviewMode) return;
+
   const playerName = getPlayerName();
   const finalPercent = Math.round((score / quizData.length) * 100);
 
@@ -560,7 +574,7 @@ shareBtn.onclick = () => {
     `${playerName} scored ${finalPercent}% in Spelling Fox!\n` +
     `🦊Can you beat this score?\n`;
 
-  const url = "https://spelling-fox.vercel.app/"; // URL
+  const url = "https://spelling-fox.vercel.app/";
 
   const shareUrl =
     "https://twitter.com/intent/tweet?text=" +
@@ -593,6 +607,8 @@ function loadQuestion() {
   updateHearts();
   hideFeedback();
   resetTimerBar();
+
+  hideShareButton();
 
   answerInput.focus();
 }
@@ -692,6 +708,12 @@ function endGameScreen(titleText) {
   } else {
     showSummary(finalPercent);
   }
+
+  if (titleText === "GAME OVER" && !reviewMode) {
+    showShareButton();
+  } else {
+    hideShareButton();
+  }
 }
 
 function gameOver() {
@@ -732,6 +754,7 @@ function startReviewMode() {
   hintEl.textContent = "Review Mistakes";
   resultEl.textContent = "";
 
+  hideShareButton();
   hideSummary();
   updateHearts();
   hideFeedback();
@@ -797,6 +820,7 @@ answerInput.addEventListener("input", () => {
     setStateImage("idle");
   }
 });
+
 // =========================
 // クレジット年取得
 // =========================
@@ -832,6 +856,7 @@ function startGame() {
   hintEl.textContent = "";
   resultEl.textContent = "";
 
+  hideShareButton();
   hideSummary();
   updateHearts();
   hideFeedback();
@@ -840,4 +865,5 @@ function startGame() {
 }
 
 loadPlayerName();
+hideShareButton();
 startGame();
