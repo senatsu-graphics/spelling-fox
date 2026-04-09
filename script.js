@@ -724,11 +724,21 @@ function endGameScreen(titleText) {
 
 if (titleText === "GAME OVER" && !reviewMode) {
   showShareButton();
-  startShareAttention(); // ←追加
+
+  if (shareTimer) clearTimeout(shareTimer);
+
+  shareTimer = setTimeout(() => {
+    startShareAttention();
+  }, 1700);
+
 } else {
   hideShareButton();
-  stopShareAttention(); // ←追加
-}
+  stopShareAttention();
+
+  if (shareTimer) {
+    clearTimeout(shareTimer);
+    shareTimer = null;
+  }
 }
 
 function gameOver() {
