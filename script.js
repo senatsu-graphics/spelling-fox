@@ -740,7 +740,7 @@ function endGameScreen(titleText) {
 
     shareTimer = setTimeout(() => {
       startShareAttention();
-    }, 1700);
+    }, 2700);
   } else {
     hideShareButton();
     stopShareAttention();
