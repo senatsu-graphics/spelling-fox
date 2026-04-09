@@ -233,6 +233,10 @@ button:active {
 /* =========================
    🦊 狐っぽい揺れ
 ========================= */
+#shareBtn {
+  display: none;
+}
+
 @keyframes foxShake {
   0%   { transform: rotate(0deg); }
   20%  { transform: rotate(-6deg); }
@@ -242,7 +246,6 @@ button:active {
   100% { transform: rotate(0deg); }
 }
 
-/* 適用クラス */
 .share-attention {
   animation: foxShake 0.6s ease;
 }
