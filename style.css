@@ -410,6 +410,21 @@ button:active {
   margin: 4px 0;
   color: #4c596d;
 }
+/* =========================
+   Score message
+========================= */
+.score-rank {
+  margin-top: 10px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.score-message {
+  margin-top: 8px;
+  font-size: 1rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
 
 /* =========================
    Footer Text
