@@ -157,6 +157,88 @@ const STORAGE_KEYS = {
 };
 
 // =========================
+// スコア別セリフ
+// =========================
+const scoreMessages = {
+  babyFox: [
+    "Baby Fox... but the brain is still loading.",
+    "Ouch. Even a sleepy fox could do better.",
+    "That was rough. Very rough.",
+    "You tried. The dictionary is still crying though.",
+    "Tiny fox, huge spelling disaster.",
+    "Not your brightest forest moment.",
+    "That was... impressively questionable."
+  ],
+  growingFox: [
+    "Growing Fox. At least you survived.",
+    "Not terrible. Not impressive either.",
+    "You're getting there... slowly.",
+    "A slightly less confused fox.",
+    "Somewhere in the middle of the forest.",
+    "You missed a lot, but hey, progress.",
+    "Still fluffy. Slightly smarter."
+  ],
+  cleverFox: [
+    "Clever Fox. Now we're talking.",
+    "Pretty sharp for a forest creature.",
+    "Nice work. The fox is learning.",
+    "That was actually solid.",
+    "You've got some real spelling instincts.",
+    "Smart fox energy.",
+    "You cooked. Not gonna lie."
+  ],
+  legendaryFox: [
+    "Legendary Fox. Absolutely unfair.",
+    "Too good. Suspiciously good.",
+    "The forest bows before your spelling power.",
+    "You didn't just pass. You dominated.",
+    "A true spelling predator.",
+    "Elite fox behavior.",
+    "You ate that. No crumbs."
+  ]
+};
+
+function getScoreRank(scorePercent) {
+  if (scorePercent < 40) return "babyFox";
+  if (scorePercent < 70) return "growingFox";
+  if (scorePercent < 90) return "cleverFox";
+  return "legendaryFox";
+}
+
+function getRankLabel(rank) {
+  switch (rank) {
+    case "babyFox":
+      return "Baby Fox";
+    case "growingFox":
+      return "Growing Fox";
+    case "cleverFox":
+      return "Clever Fox";
+    case "legendaryFox":
+      return "Legendary Fox";
+    default:
+      return "";
+  }
+}
+
+function getRandomMessage(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getScoreMessage(scoreValue, totalValue) {
+  const scorePercent = totalValue > 0 ? Math.round((scoreValue / totalValue) * 100) : 0;
+  const rank = getScoreRank(scorePercent);
+  const rankLabel = getRankLabel(rank);
+  const message = getRandomMessage(scoreMessages[rank]);
+
+  return {
+    percent: scorePercent,
+    rank,
+    rankLabel,
+    message
+  };
+}
+
+// =========================
 // 要素
 // =========================
 const answerInput = document.getElementById("answerInput");
@@ -711,7 +793,8 @@ function endGameScreen(titleText) {
   stopQuestionTimer();
   stopPlayAttention();
 
-  const finalPercent = Math.round((score / quizData.length) * 100);
+  const scoreInfo = getScoreMessage(score, quizData.length);
+  const finalPercent = scoreInfo.percent;
 
   if (!reviewMode) {
     savePlayerName();
@@ -719,7 +802,13 @@ function endGameScreen(titleText) {
   }
 
   setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
-  hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
+
+  hintEl.innerHTML = `
+    <span class="big-title">${titleText}</span>
+    <div class="score-rank">${scoreInfo.rankLabel}</div>
+    <div class="score-message">${scoreInfo.message}</div>
+  `;
+
   resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
   endButtons.style.display = "block";
 
