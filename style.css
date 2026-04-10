@@ -413,17 +413,26 @@ button:active {
 /* =========================
    Score message
 ========================= */
+#finalResult {
+  margin-top: 12px;
+}
+
 .score-rank {
-  margin-top: 10px;
   font-size: 1.3rem;
   font-weight: 700;
 }
 
 .score-message {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 1rem;
   line-height: 1.5;
   opacity: 0.95;
+}
+
+.big-score {
+  margin-top: 10px;
+  font-size: 2.2rem;
+  font-weight: 900;
 }
 
 /* =========================
