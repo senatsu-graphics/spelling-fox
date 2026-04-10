@@ -278,6 +278,9 @@ const todayHistoryList = document.getElementById("todayHistoryList");
 // SNSシェアボタン
 const shareBtn = document.getElementById("shareBtn");
 
+// Shareの下に出す結果表示
+const finalResultEl = document.getElementById("finalResult");
+
 // =========================
 // Shareボタン演出
 // =========================
@@ -352,6 +355,11 @@ function hideFeedback() {
   correctAnswerText.textContent = "";
   userCompare.innerHTML = "";
   correctCompare.innerHTML = "";
+}
+
+function clearFinalResult() {
+  if (!finalResultEl) return;
+  finalResultEl.innerHTML = "";
 }
 
 function escapeHtml(str) {
@@ -713,6 +721,7 @@ function loadQuestion() {
   resetTimerBar();
 
   hideShareButton();
+  clearFinalResult();
 
   answerInput.focus();
 }
@@ -803,13 +812,17 @@ function endGameScreen(titleText) {
 
   setStateImage(titleText === "GAME OVER" ? "gameover" : "correct");
 
-  hintEl.innerHTML = `
-    <span class="big-title">${titleText}</span>
-    <div class="score-rank">${scoreInfo.rankLabel}</div>
-    <div class="score-message">${scoreInfo.message}</div>
-  `;
+  hintEl.innerHTML = `<span class="big-title">${titleText}</span>`;
+  resultEl.innerHTML = "";
 
-  resultEl.innerHTML = `<span class="big-score">${finalPercent}%</span>`;
+  if (finalResultEl) {
+    finalResultEl.innerHTML = `
+      <div class="score-rank">${scoreInfo.rankLabel}</div>
+      <div class="score-message">${scoreInfo.message}</div>
+      <div class="big-score">${finalPercent}%</div>
+    `;
+  }
+
   endButtons.style.display = "block";
 
   updateReviewButtonVisibility();
@@ -887,6 +900,7 @@ function startReviewMode() {
 
   hideShareButton();
   hideSummary();
+  clearFinalResult();
   updateHearts();
   hideFeedback();
   loadQuestion();
@@ -1008,6 +1022,7 @@ function startGame() {
 
   hideShareButton();
   hideSummary();
+  clearFinalResult();
   updateHearts();
   hideFeedback();
   loadQuestion();
@@ -1016,4 +1031,5 @@ function startGame() {
 
 loadPlayerName();
 hideShareButton();
+clearFinalResult();
 startGame();
